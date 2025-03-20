@@ -14,7 +14,7 @@ import ModelResults from "@/components/ModelResults";
 import ResultCharts from "@/components/ResultCharts";
 import GithubIcon from "@/components/GithubIcon";
 import { toast } from "sonner";
-import { Database, Brain, ChevronDown, Ship, UploadCloud, Flask, Map } from "lucide-react";
+import { Database, Brain, ChevronDown, Ship, UploadCloud, Beaker, Map } from "lucide-react";
 
 const Index = () => {
   const [fishingData, setFishingData] = useState<FishingData[]>([]);
@@ -172,7 +172,7 @@ const Index = () => {
                   className="flex items-center gap-1"
                   disabled={!trainedModel}
                 >
-                  <Flask className="w-4 h-4" />
+                  <Beaker className="w-4 h-4" />
                   <span className="hidden sm:inline">Predict</span>
                 </TabsTrigger>
                 <TabsTrigger 

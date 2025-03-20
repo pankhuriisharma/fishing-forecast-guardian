@@ -77,7 +77,7 @@ const MapView = ({ data, prediction, onLocationSelect }: MapViewProps) => {
   useEffect(() => {
     if (!mapLoaded || !leafletMapRef.current || !markersLayerRef.current) return;
     
-    const L = window.L;
+    const leaflet = window.L as any;
     
     // Clear existing layers
     markersLayerRef.current.clearLayers();
@@ -94,7 +94,7 @@ const MapView = ({ data, prediction, onLocationSelect }: MapViewProps) => {
     
     // Create and add heatmap layer
     if (heatData.length > 0) {
-      heatLayerRef.current = L.heatLayer(heatData, {
+      heatLayerRef.current = leaflet.heatLayer(heatData, {
         radius: 15,
         blur: 20,
         maxZoom: 10,
@@ -109,7 +109,7 @@ const MapView = ({ data, prediction, onLocationSelect }: MapViewProps) => {
       .slice(0, 15); // Take a small sample
     
     illegalSample.forEach(point => {
-      L.circleMarker([point.lat, point.lon], {
+      leaflet.circleMarker([point.lat, point.lon], {
         radius: 4,
         color: 'rgba(255, 0, 0, 0.7)',
         fillOpacity: 0.7
@@ -123,13 +123,13 @@ const MapView = ({ data, prediction, onLocationSelect }: MapViewProps) => {
   useEffect(() => {
     if (!mapLoaded || !leafletMapRef.current || !markersLayerRef.current || !prediction) return;
     
-    const L = window.L;
+    const leaflet = window.L as any;
     
     // Add prediction marker
     const [lat, lon] = prediction.location;
     
     // Define custom icon
-    const icon = L.divIcon({
+    const icon = leaflet.divIcon({
       className: 'prediction-marker',
       html: `<div class="relative">
               <div class="absolute inset-0 bg-${prediction.result ? 'red' : 'green'}-500 rounded-full animate-pulse opacity-25"></div>
@@ -141,7 +141,7 @@ const MapView = ({ data, prediction, onLocationSelect }: MapViewProps) => {
       iconAnchor: [12, 12]
     });
     
-    const marker = L.marker([lat, lon], { icon })
+    const marker = leaflet.marker([lat, lon], { icon })
       .addTo(markersLayerRef.current)
       .bindTooltip(`
         <strong>${prediction.result ? 'High' : 'Low'} Risk</strong><br>

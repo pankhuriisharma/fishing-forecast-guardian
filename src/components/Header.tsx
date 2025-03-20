@@ -1,7 +1,7 @@
 
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
-import { HelpCircle, Github, LifeBuoy, Boat } from "lucide-react";
+import { HelpCircle, Github, LifeBuoy, Ship } from "lucide-react";
 import { toast } from "sonner";
 
 const Header = () => {
@@ -12,7 +12,7 @@ const Header = () => {
           <div className="relative">
             <div className="absolute -inset-1 rounded-full bg-gradient-to-r from-ocean-dark to-ocean-light opacity-75 blur-sm"></div>
             <div className="relative rounded-full p-1.5 bg-ocean text-white">
-              <Boat className="h-5 w-5" />
+              <Ship className="h-5 w-5" />
             </div>
           </div>
           <div>

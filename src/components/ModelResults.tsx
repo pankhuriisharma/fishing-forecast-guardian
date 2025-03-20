@@ -7,6 +7,13 @@ import { TrainedModel, Prediction } from "@/types";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Check, X, AlertTriangle, Percent, Trophy, Brain } from "lucide-react";
 
+// Helper function to get color based on likelihood
+const getLikelihoodColor = (probability: number): string => {
+  if (probability >= 0.7) return "text-red-500";
+  if (probability >= 0.4) return "text-yellow-500";
+  return "text-green-500";
+};
+
 interface ModelResultsProps {
   trainedModel: TrainedModel | null;
   prediction: Prediction | null;
@@ -152,9 +159,25 @@ const ModelResults = ({ trainedModel, prediction }: ModelResultsProps) => {
   );
 };
 
-// This component isn't exported in the original, let's define it
+// Define Clock component for time display
 const Clock = ({ className }: { className?: string }) => {
-  return <div className={className}><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg></div>;
+  return (
+    <svg 
+      xmlns="http://www.w3.org/2000/svg" 
+      width="24" 
+      height="24" 
+      viewBox="0 0 24 24" 
+      fill="none" 
+      stroke="currentColor" 
+      strokeWidth="2" 
+      strokeLinecap="round" 
+      strokeLinejoin="round"
+      className={className}
+    >
+      <circle cx="12" cy="12" r="10"/>
+      <polyline points="12 6 12 12 16 14"/>
+    </svg>
+  );
 };
 
 export default ModelResults;
