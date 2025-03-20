@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { FishingData, Prediction } from "@/types";
-import { Map, Pin, LocateFixed, Search, AlertTriangle, Loader } from "lucide-react";
+import { Map, Pin, LocateFixed, Search, AlertTriangle, Loader, Globe, Info } from "lucide-react";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { toast } from "sonner";
 // Import Leaflet and Leaflet heat types
@@ -29,22 +29,50 @@ const MapView = ({ data, prediction, onLocationSelect }: MapViewProps) => {
   const [searchLon, setSearchLon] = useState<string>("");
   const [mapLoaded, setMapLoaded] = useState<boolean>(false);
   const [isLoading, setIsLoading] = useState<boolean>(true);
+  const [mapView, setMapView] = useState<'heatmap' | 'markers'>('heatmap');
   
   useEffect(() => {
-    // Leaflet imports are already handled at the top of the file
     if (!mapContainerRef.current || leafletMapRef.current) return;
     
     try {
-      // Initialize the map
-      const map = L.map(mapContainerRef.current).setView([20, 0], 2);
+      // Initialize the map with a more detailed basemap
+      const map = L.map(mapContainerRef.current, {
+        worldCopyJump: true,
+        minZoom: 2
+      }).setView([20, 0], 2);
       
-      L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-        attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+      // Add multiple base layers for user to choose from
+      const basemaps = {
+        "OpenStreetMap": L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+          attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+        }),
+        "Satellite": L.tileLayer('https://{s}.google.com/vt/lyrs=s&x={x}&y={y}&z={z}', {
+          maxZoom: 20,
+          subdomains: ['mt0', 'mt1', 'mt2', 'mt3'],
+          attribution: '&copy; Google Maps'
+        }),
+        "Terrain": L.tileLayer('https://{s}.tile.opentopomap.org/{z}/{x}/{y}.png', {
+          attribution: '&copy; <a href="https://opentopomap.org">OpenTopoMap</a> contributors'
+        })
+      };
+      
+      basemaps["OpenStreetMap"].addTo(map);
+      
+      // Add layer control
+      L.control.layers(basemaps, {}, {
+        position: 'topright',
+        collapsed: true
       }).addTo(map);
       
       // Add zoom control
       L.control.zoom({
         position: 'topright'
+      }).addTo(map);
+      
+      // Add scale control
+      L.control.scale({
+        imperial: false,
+        position: 'bottomright'
       }).addTo(map);
       
       // Store map in ref
@@ -59,6 +87,24 @@ const MapView = ({ data, prediction, onLocationSelect }: MapViewProps) => {
         onLocationSelect(lat, lng);
         setSearchLat(lat.toFixed(6));
         setSearchLon(lng.toFixed(6));
+        
+        // Add a temporary marker at the clicked location
+        if (markersLayerRef.current) {
+          const clickMarker = L.circleMarker([lat, lng], {
+            radius: 6,
+            color: 'rgba(0, 0, 255, 0.7)',
+            fillOpacity: 0.7
+          }).addTo(markersLayerRef.current)
+            .bindTooltip(`Selected Location<br>${lat.toFixed(6)}, ${lng.toFixed(6)}`);
+            
+          // Remove the marker after a delay
+          setTimeout(() => {
+            if (markersLayerRef.current) {
+              markersLayerRef.current.removeLayer(clickMarker);
+            }
+          }, 5000);
+        }
+        
         toast.info(`Location selected: ${lat.toFixed(6)}, ${lng.toFixed(6)}`);
       });
       
@@ -92,41 +138,53 @@ const MapView = ({ data, prediction, onLocationSelect }: MapViewProps) => {
     if (data.length === 0) return;
     
     try {
-      // Process data for heatmap - illegal points only
-      const heatData = data
-        .filter(point => point.illegal === 1)
-        .map(point => [point.lat, point.lon, 1]); // lat, lon, intensity
+      // Process data for heatmap - all points with intensity based on illegal status
+      const heatData = data.map(point => {
+        // Higher intensity for illegal points
+        const intensity = point.illegal === 1 ? 1.0 : 0.3;
+        return [point.lat, point.lon, intensity];
+      });
       
-      // Create and add heatmap layer if we have data
-      if (heatData.length > 0 && L.heatLayer) {
+      // Create and add heatmap layer if we have data and heatmap view is active
+      if (heatData.length > 0 && L.heatLayer && mapView === 'heatmap') {
         heatLayerRef.current = L.heatLayer(heatData as [number, number, number][], {
           radius: 15,
           blur: 20,
           maxZoom: 10,
-          gradient: {0.4: 'blue', 0.6: 'green', 0.7: 'yellow', 0.8: 'orange', 1.0: 'red'}
+          // Use a more nuanced gradient
+          gradient: {
+            0.2: 'blue',
+            0.4: 'cyan',
+            0.6: 'lime',
+            0.7: 'yellow',
+            0.8: 'orange',
+            1.0: 'red'
+          }
         }).addTo(leafletMapRef.current);
       }
       
-      // Add some illegal points as markers for visibility (not all to avoid overcrowding)
-      const illegalSample = data
-        .filter(point => point.illegal === 1)
-        .sort(() => 0.5 - Math.random()) // Shuffle
-        .slice(0, 15); // Take a small sample
-      
-      illegalSample.forEach(point => {
-        L.circleMarker([point.lat, point.lon], {
-          radius: 4,
-          color: 'rgba(255, 0, 0, 0.7)',
-          fillOpacity: 0.7
-        }).addTo(markersLayerRef.current!)
-        .bindTooltip(`Illegal Activity<br>Hour: ${point.hour}:00`);
-      });
+      // If in marker view or if heatmap fails, show markers instead
+      if (mapView === 'markers' || !heatLayerRef.current) {
+        // Add markers for all points
+        data.forEach(point => {
+          // Color based on illegal status
+          const color = point.illegal === 1 ? 'rgba(255, 0, 0, 0.7)' : 'rgba(0, 128, 0, 0.7)';
+          const status = point.illegal === 1 ? 'Illegal Activity' : 'Legal Activity';
+          
+          L.circleMarker([point.lat, point.lon], {
+            radius: 4,
+            color: color,
+            fillOpacity: 0.7
+          }).addTo(markersLayerRef.current!)
+            .bindTooltip(`${status}<br>Hour: ${point.hour}:00`);
+        });
+      }
     } catch (error) {
       console.error("Error updating map data:", error);
       toast.error("Error displaying data on the map");
     }
     
-  }, [data, mapLoaded]);
+  }, [data, mapLoaded, mapView]);
   
   // Update prediction marker
   useEffect(() => {
@@ -136,11 +194,11 @@ const MapView = ({ data, prediction, onLocationSelect }: MapViewProps) => {
       // Add prediction marker
       const [lat, lon] = prediction.location;
       
-      // Define custom icon
-      const icon = L.divIcon({
+      // Define custom icon with pulse animation
+      const pulseIcon = L.divIcon({
         className: 'prediction-marker',
-        html: `<div class="relative">
-                <div class="absolute inset-0 bg-${prediction.result ? 'red' : 'green'}-500 rounded-full animate-pulse opacity-25"></div>
+        html: `<div class="relative w-6 h-6">
+                <div class="absolute inset-0 bg-${prediction.result ? 'red' : 'green'}-500 rounded-full animate-ping opacity-30"></div>
                 <div class="absolute inset-0 flex items-center justify-center">
                   <div class="h-4 w-4 rounded-full bg-${prediction.result ? 'red' : 'green'}-500"></div>
                 </div>
@@ -149,16 +207,27 @@ const MapView = ({ data, prediction, onLocationSelect }: MapViewProps) => {
         iconAnchor: [12, 12]
       });
       
-      const marker = L.marker([lat, lon], { icon })
+      const marker = L.marker([lat, lon], { icon: pulseIcon })
         .addTo(markersLayerRef.current)
         .bindTooltip(`
           <strong>${prediction.result ? 'High' : 'Low'} Risk</strong><br>
           Probability: ${(prediction.probability * 100).toFixed(1)}%<br>
-          Hour: ${prediction.hour}:00
+          Hour: ${prediction.hour}:00<br>
+          Location: ${lat.toFixed(6)}, ${lon.toFixed(6)}
         `);
       
-      // Pan to the prediction location
-      leafletMapRef.current.panTo([lat, lon]);
+      // Add a circle to indicate the area of prediction
+      const radius = 25000 + (prediction.probability * 75000); // Radius in meters, larger for higher probabilities
+      L.circle([lat, lon], {
+        radius: radius,
+        color: prediction.result ? 'red' : 'green',
+        fillColor: prediction.result ? 'red' : 'green',
+        fillOpacity: 0.1,
+        weight: 1
+      }).addTo(markersLayerRef.current);
+      
+      // Pan to the prediction location and zoom to appropriate level
+      leafletMapRef.current.setView([lat, lon], 6);
     } catch (error) {
       console.error("Error updating prediction marker:", error);
     }
@@ -177,9 +246,35 @@ const MapView = ({ data, prediction, onLocationSelect }: MapViewProps) => {
     onLocationSelect(lat, lon);
     
     if (mapLoaded && leafletMapRef.current) {
+      // Clear existing markers
+      if (markersLayerRef.current) {
+        markersLayerRef.current.clearLayers();
+      }
+      
+      // Add a marker at the searched location
+      if (markersLayerRef.current) {
+        L.marker([lat, lon], {
+          icon: L.icon({
+            iconUrl: 'https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-blue.png',
+            shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-shadow.png',
+            iconSize: [25, 41],
+            iconAnchor: [12, 41],
+            popupAnchor: [1, -34],
+            shadowSize: [41, 41]
+          })
+        }).addTo(markersLayerRef.current)
+          .bindTooltip(`Searched Location<br>${lat.toFixed(6)}, ${lon.toFixed(6)}`);
+      }
+      
       leafletMapRef.current.setView([lat, lon], 6);
       toast.info(`Map centered at ${lat.toFixed(6)}, ${lon.toFixed(6)}`);
     }
+  };
+  
+  const toggleMapView = () => {
+    const newView = mapView === 'heatmap' ? 'markers' : 'heatmap';
+    setMapView(newView);
+    toast.info(`Map view changed to ${newView}`);
   };
   
   return (
@@ -204,6 +299,31 @@ const MapView = ({ data, prediction, onLocationSelect }: MapViewProps) => {
           <AlertTriangle className="w-3 h-3 mr-1 text-green-500" />
           Low Risk
         </Badge>
+      </div>
+      
+      <div className="absolute top-2 right-2 z-10">
+        <TooltipProvider>
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <Button variant="outline" size="sm" className="h-8 bg-background/80 backdrop-blur-sm" onClick={toggleMapView}>
+                {mapView === 'heatmap' ? (
+                  <>
+                    <Globe className="w-4 h-4 mr-1" />
+                    <span className="sr-md:not-sr-only">Show Markers</span>
+                  </>
+                ) : (
+                  <>
+                    <Info className="w-4 h-4 mr-1" />
+                    <span className="sr-md:not-sr-only">Show Heatmap</span>
+                  </>
+                )}
+              </Button>
+            </TooltipTrigger>
+            <TooltipContent>
+              <p>Toggle between heatmap and marker view</p>
+            </TooltipContent>
+          </Tooltip>
+        </TooltipProvider>
       </div>
       
       <div className="absolute bottom-3 left-2 right-2 z-10">
