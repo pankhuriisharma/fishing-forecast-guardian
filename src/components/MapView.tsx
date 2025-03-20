@@ -9,6 +9,10 @@ import { FishingData, Prediction } from "@/types";
 import { Map, Pin, LocateFixed, Search, AlertTriangle, Loader } from "lucide-react";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { toast } from "sonner";
+// Import Leaflet and Leaflet heat types
+import L from 'leaflet';
+import 'leaflet/dist/leaflet.css';
+import 'leaflet.heat';
 
 interface MapViewProps {
   data: FishingData[];
@@ -18,8 +22,8 @@ interface MapViewProps {
 
 const MapView = ({ data, prediction, onLocationSelect }: MapViewProps) => {
   const mapContainerRef = useRef<HTMLDivElement>(null);
-  const leafletMapRef = useRef<any>(null);
-  const markersLayerRef = useRef<any>(null);
+  const leafletMapRef = useRef<L.Map | null>(null);
+  const markersLayerRef = useRef<L.LayerGroup | null>(null);
   const heatLayerRef = useRef<any>(null);
   const [searchLat, setSearchLat] = useState<string>("");
   const [searchLon, setSearchLon] = useState<string>("");
@@ -27,22 +31,19 @@ const MapView = ({ data, prediction, onLocationSelect }: MapViewProps) => {
   const [isLoading, setIsLoading] = useState<boolean>(true);
   
   useEffect(() => {
-    // Dynamic import to avoid SSR issues
-    Promise.all([
-      import('leaflet'),
-      import('leaflet.heat')
-    ]).then(([L, heat]) => {
-      if (!mapContainerRef.current || leafletMapRef.current) return;
-      
+    // Leaflet imports are already handled at the top of the file
+    if (!mapContainerRef.current || leafletMapRef.current) return;
+    
+    try {
       // Initialize the map
-      const map = L.default.map(mapContainerRef.current).setView([20, 0], 2);
+      const map = L.map(mapContainerRef.current).setView([20, 0], 2);
       
-      L.default.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+      L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
         attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
       }).addTo(map);
       
       // Add zoom control
-      L.default.control.zoom({
+      L.control.zoom({
         position: 'topright'
       }).addTo(map);
       
@@ -50,10 +51,10 @@ const MapView = ({ data, prediction, onLocationSelect }: MapViewProps) => {
       leafletMapRef.current = map;
       
       // Create markers layer
-      markersLayerRef.current = L.default.layerGroup().addTo(map);
+      markersLayerRef.current = L.layerGroup().addTo(map);
       
       // Set up click event
-      map.on('click', (e: any) => {
+      map.on('click', (e: L.LeafletMouseEvent) => {
         const { lat, lng } = e.latlng;
         onLocationSelect(lat, lng);
         setSearchLat(lat.toFixed(6));
@@ -63,7 +64,11 @@ const MapView = ({ data, prediction, onLocationSelect }: MapViewProps) => {
       
       setMapLoaded(true);
       setIsLoading(false);
-    });
+    } catch (error) {
+      console.error("Error initializing map:", error);
+      toast.error("Failed to load map. Please refresh the page.");
+      setIsLoading(false);
+    }
     
     return () => {
       if (leafletMapRef.current) {
@@ -77,45 +82,49 @@ const MapView = ({ data, prediction, onLocationSelect }: MapViewProps) => {
   useEffect(() => {
     if (!mapLoaded || !leafletMapRef.current || !markersLayerRef.current) return;
     
-    const leaflet = window.L as any;
-    
     // Clear existing layers
     markersLayerRef.current.clearLayers();
     if (heatLayerRef.current) {
       leafletMapRef.current.removeLayer(heatLayerRef.current);
+      heatLayerRef.current = null;
     }
     
     if (data.length === 0) return;
     
-    // Process data for heatmap - illegal points only
-    const heatData = data
-      .filter(point => point.illegal === 1)
-      .map(point => [point.lat, point.lon, 1]); // lat, lon, intensity
-    
-    // Create and add heatmap layer
-    if (heatData.length > 0) {
-      heatLayerRef.current = leaflet.heatLayer(heatData, {
-        radius: 15,
-        blur: 20,
-        maxZoom: 10,
-        gradient: {0.4: 'blue', 0.6: 'green', 0.7: 'yellow', 0.8: 'orange', 1.0: 'red'}
-      }).addTo(leafletMapRef.current);
+    try {
+      // Process data for heatmap - illegal points only
+      const heatData = data
+        .filter(point => point.illegal === 1)
+        .map(point => [point.lat, point.lon, 1]); // lat, lon, intensity
+      
+      // Create and add heatmap layer if we have data
+      if (heatData.length > 0 && L.heatLayer) {
+        heatLayerRef.current = L.heatLayer(heatData as [number, number, number][], {
+          radius: 15,
+          blur: 20,
+          maxZoom: 10,
+          gradient: {0.4: 'blue', 0.6: 'green', 0.7: 'yellow', 0.8: 'orange', 1.0: 'red'}
+        }).addTo(leafletMapRef.current);
+      }
+      
+      // Add some illegal points as markers for visibility (not all to avoid overcrowding)
+      const illegalSample = data
+        .filter(point => point.illegal === 1)
+        .sort(() => 0.5 - Math.random()) // Shuffle
+        .slice(0, 15); // Take a small sample
+      
+      illegalSample.forEach(point => {
+        L.circleMarker([point.lat, point.lon], {
+          radius: 4,
+          color: 'rgba(255, 0, 0, 0.7)',
+          fillOpacity: 0.7
+        }).addTo(markersLayerRef.current!)
+        .bindTooltip(`Illegal Activity<br>Hour: ${point.hour}:00`);
+      });
+    } catch (error) {
+      console.error("Error updating map data:", error);
+      toast.error("Error displaying data on the map");
     }
-    
-    // Add some illegal points as markers for visibility (not all to avoid overcrowding)
-    const illegalSample = data
-      .filter(point => point.illegal === 1)
-      .sort(() => 0.5 - Math.random()) // Shuffle
-      .slice(0, 15); // Take a small sample
-    
-    illegalSample.forEach(point => {
-      leaflet.circleMarker([point.lat, point.lon], {
-        radius: 4,
-        color: 'rgba(255, 0, 0, 0.7)',
-        fillOpacity: 0.7
-      }).addTo(markersLayerRef.current)
-      .bindTooltip(`Illegal Activity<br>Hour: ${point.hour}:00`);
-    });
     
   }, [data, mapLoaded]);
   
@@ -123,34 +132,36 @@ const MapView = ({ data, prediction, onLocationSelect }: MapViewProps) => {
   useEffect(() => {
     if (!mapLoaded || !leafletMapRef.current || !markersLayerRef.current || !prediction) return;
     
-    const leaflet = window.L as any;
-    
-    // Add prediction marker
-    const [lat, lon] = prediction.location;
-    
-    // Define custom icon
-    const icon = leaflet.divIcon({
-      className: 'prediction-marker',
-      html: `<div class="relative">
-              <div class="absolute inset-0 bg-${prediction.result ? 'red' : 'green'}-500 rounded-full animate-pulse opacity-25"></div>
-              <div class="absolute inset-0 flex items-center justify-center">
-                <div class="h-4 w-4 rounded-full bg-${prediction.result ? 'red' : 'green'}-500"></div>
-              </div>
-            </div>`,
-      iconSize: [24, 24],
-      iconAnchor: [12, 12]
-    });
-    
-    const marker = leaflet.marker([lat, lon], { icon })
-      .addTo(markersLayerRef.current)
-      .bindTooltip(`
-        <strong>${prediction.result ? 'High' : 'Low'} Risk</strong><br>
-        Probability: ${(prediction.probability * 100).toFixed(1)}%<br>
-        Hour: ${prediction.hour}:00
-      `);
-    
-    // Pan to the prediction location
-    leafletMapRef.current.panTo([lat, lon]);
+    try {
+      // Add prediction marker
+      const [lat, lon] = prediction.location;
+      
+      // Define custom icon
+      const icon = L.divIcon({
+        className: 'prediction-marker',
+        html: `<div class="relative">
+                <div class="absolute inset-0 bg-${prediction.result ? 'red' : 'green'}-500 rounded-full animate-pulse opacity-25"></div>
+                <div class="absolute inset-0 flex items-center justify-center">
+                  <div class="h-4 w-4 rounded-full bg-${prediction.result ? 'red' : 'green'}-500"></div>
+                </div>
+              </div>`,
+        iconSize: [24, 24],
+        iconAnchor: [12, 12]
+      });
+      
+      const marker = L.marker([lat, lon], { icon })
+        .addTo(markersLayerRef.current)
+        .bindTooltip(`
+          <strong>${prediction.result ? 'High' : 'Low'} Risk</strong><br>
+          Probability: ${(prediction.probability * 100).toFixed(1)}%<br>
+          Hour: ${prediction.hour}:00
+        `);
+      
+      // Pan to the prediction location
+      leafletMapRef.current.panTo([lat, lon]);
+    } catch (error) {
+      console.error("Error updating prediction marker:", error);
+    }
     
   }, [prediction, mapLoaded]);
   
