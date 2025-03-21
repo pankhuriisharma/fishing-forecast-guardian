@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
@@ -5,6 +6,7 @@ import { FishingData, ModelType, TrainedModel, Prediction } from "@/types";
 import { trainModel, modelDefinitions } from "@/utils/fishingModels";
 import { prepareTrainingData, splitData, generateMockData } from "@/utils/dataProcessor";
 import Header from "@/components/Header";
+import { HeaderThemeToggle } from "@/components/HeaderThemeToggle";
 import Footer from "@/components/Footer";
 import DataUploader from "@/components/DataUploader";
 import ModelSelector from "@/components/ModelSelector";
@@ -110,8 +112,11 @@ const Index = () => {
   }, []);
   
   return (
-    <div className="min-h-screen flex flex-col bg-gradient-to-br from-slate-50 via-white to-slate-100">
+    <div className="min-h-screen flex flex-col bg-gradient-to-br from-slate-50 via-white to-slate-100 dark:from-gray-900 dark:via-gray-800 dark:to-gray-900">
       <Header />
+      <div className="absolute top-4 right-8 z-10">
+        <HeaderThemeToggle />
+      </div>
       
       <main className="flex-1 container mx-auto px-4 py-6">
         <div className="mb-6 text-center max-w-3xl mx-auto">
