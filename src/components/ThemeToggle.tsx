@@ -18,15 +18,14 @@ export function ThemeToggle() {
   }
 
   return (
-    <div className="flex items-center space-x-2 px-3 py-2 rounded-md border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900">
-      <Sun className="h-[1.2rem] w-[1.2rem] text-yellow-500 dark:text-slate-400" />
+    <div className="flex items-center space-x-2 px-2 py-1 rounded-md bg-slate-100 dark:bg-slate-800">
+      <Sun className="h-4 w-4 text-slate-600 dark:text-slate-400" />
       <Switch
         checked={theme === "dark"}
         onCheckedChange={() => setTheme(theme === "dark" ? "light" : "dark")}
-        className="data-[state=checked]:bg-slate-700"
         aria-label="Toggle theme"
       />
-      <Moon className="h-[1.2rem] w-[1.2rem] text-slate-700 dark:text-blue-400" />
+      <Moon className="h-4 w-4 text-slate-600 dark:text-slate-400" />
     </div>
   );
 }
