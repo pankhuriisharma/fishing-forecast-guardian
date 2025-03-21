@@ -1,6 +1,5 @@
 
 import { useTheme } from "./ThemeProvider";
-import { Button } from "@/components/ui/button";
 import { Moon, Sun } from "lucide-react";
 import { Switch } from "@/components/ui/switch";
 import { useState, useEffect } from "react";
@@ -19,7 +18,7 @@ export function ThemeToggle() {
   }
 
   return (
-    <div className="flex items-center space-x-2">
+    <div className="flex items-center space-x-2 px-2 py-1 rounded-md bg-slate-100 dark:bg-slate-800">
       <Sun className="h-4 w-4 text-slate-600 dark:text-slate-400" />
       <Switch
         checked={theme === "dark"}
