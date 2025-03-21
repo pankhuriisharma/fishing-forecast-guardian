@@ -3,11 +3,10 @@ import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
 import { HelpCircle, Github, LifeBuoy, Ship } from "lucide-react";
 import { toast } from "sonner";
-import { HeaderThemeToggle } from "./HeaderThemeToggle";
 
 const Header = () => {
   return (
-    <header className="w-full backdrop-blur-md bg-white/90 dark:bg-gray-900/90 sticky top-0 z-50 shadow-sm border-b border-slate-200 dark:border-slate-700">
+    <header className="w-full backdrop-blur-md bg-white/90 sticky top-0 z-50 shadow-sm border-b border-slate-200">
       <div className="container mx-auto px-4 py-3 flex items-center justify-between">
         <div className="flex items-center gap-2">
           <div className="relative">
@@ -17,19 +16,17 @@ const Header = () => {
             </div>
           </div>
           <div>
-            <h1 className="text-xl font-bold text-slate-800 dark:text-slate-100 tracking-tight">FishGuard</h1>
-            <p className="text-xs text-slate-500 dark:text-slate-400">Illegal Fishing Detection System</p>
+            <h1 className="text-xl font-bold text-slate-800 tracking-tight">FishGuard</h1>
+            <p className="text-xs text-slate-500">Illegal Fishing Detection System</p>
           </div>
         </div>
         
         <div className="flex items-center gap-4">
-          <HeaderThemeToggle />
-          
           <div className="flex items-center gap-2">
             <Button
               variant="ghost"
               size="sm"
-              className="text-slate-600 dark:text-slate-300 hover:text-primary hidden md:flex"
+              className="text-slate-600 hover:text-primary hidden md:flex"
               onClick={() => {
                 toast.info("Help documentation would open here");
               }}

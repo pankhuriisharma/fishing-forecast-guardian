@@ -1,11 +1,10 @@
 
-import { createContext, useContext, useEffect, useState } from "react";
+import { createContext, useContext, useEffect } from "react";
 
-type Theme = "light" | "dark";
+type Theme = "light";
 
 type ThemeContextType = {
   theme: Theme;
-  setTheme: (theme: Theme) => void;
 };
 
 const ThemeContext = createContext<ThemeContextType | undefined>(undefined);
@@ -15,25 +14,23 @@ export function ThemeProvider({
 }: {
   children: React.ReactNode;
 }) {
-  const [theme, setTheme] = useState<Theme>(
-    () => (localStorage.getItem("theme") as Theme) || "light"
-  );
+  const theme: Theme = "light";
 
   useEffect(() => {
     const root = window.document.documentElement;
     
-    // Remove the old theme class
-    root.classList.remove("light", "dark");
+    // Remove any theme classes
+    root.classList.remove("dark");
     
-    // Add the new theme class
-    root.classList.add(theme);
+    // Add the light theme class
+    root.classList.add("light");
     
-    // Save theme to localStorage
-    localStorage.setItem("theme", theme);
-  }, [theme]);
+    // Clear theme from localStorage
+    localStorage.removeItem("theme");
+  }, []);
 
   return (
-    <ThemeContext.Provider value={{ theme, setTheme }}>
+    <ThemeContext.Provider value={{ theme }}>
       {children}
     </ThemeContext.Provider>
   );
