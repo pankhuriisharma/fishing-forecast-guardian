@@ -19,53 +19,60 @@ interface MapViewProps {
   onLocationSelect: (lat: number, lon: number) => void;
 }
 
-// Simple function to check if coordinates are likely over ocean
+// Updated function to check if coordinates are over water (including seashores, coastal areas, and water bodies)
 const isOceanLocation = (lat: number, lon: number): boolean => {
-  // Major ocean areas (simplified check)
-  // Atlantic Ocean
-  if (lon >= -80 && lon <= 20 && lat >= -60 && lat <= 70) {
-    // Exclude major landmasses
-    if ((lat >= 25 && lat <= 50 && lon >= -25 && lon <= 40) || // Europe/Africa
-        (lat >= 30 && lat <= 70 && lon >= -130 && lon <= -60) || // North America
-        (lat >= -35 && lat <= 35 && lon >= -20 && lon <= 50)) { // Africa
+  // Major landmasses to exclude (simplified check for clearly inland areas)
+  
+  // Major inland areas of North America
+  if (lat >= 25 && lat <= 70 && lon >= -130 && lon <= -60) {
+    // Exclude central/inland North America, but allow coastal areas
+    if (lat >= 30 && lat <= 65 && lon >= -120 && lon <= -75) {
       return false;
     }
-    return true;
   }
   
-  // Pacific Ocean
-  if ((lon >= -180 && lon <= -60) || (lon >= 120 && lon <= 180)) {
-    // Exclude major landmasses
-    if ((lat >= 25 && lat <= 70 && lon >= -160 && lon <= -120) || // North America West Coast
-        (lat >= -50 && lat <= 10 && lon >= -90 && lon <= -70) || // South America
-        (lat >= -50 && lat <= 50 && lon >= 120 && lon <= 150)) { // Asia/Australia
+  // Major inland areas of South America
+  if (lat >= -60 && lat <= 15 && lon >= -85 && lon <= -35) {
+    // Exclude central/inland South America, but allow coastal areas
+    if (lat >= -30 && lat <= 10 && lon >= -75 && lon <= -45) {
       return false;
     }
-    return true;
   }
   
-  // Indian Ocean
-  if (lon >= 20 && lon <= 120 && lat >= -60 && lat <= 30) {
-    // Exclude major landmasses
-    if ((lat >= -35 && lat <= 35 && lon >= 20 && lon <= 50) || // Africa/Middle East
-        (lat >= -50 && lat <= -10 && lon >= 110 && lon <= 160) || // Australia
-        (lat >= 5 && lat <= 35 && lon >= 65 && lon <= 95)) { // India
+  // Major inland areas of Europe and Western Asia
+  if (lat >= 35 && lat <= 75 && lon >= -10 && lon <= 60) {
+    // Exclude central/inland Europe and Western Asia, but allow coastal areas
+    if (lat >= 40 && lat <= 70 && lon >= 5 && lon <= 50) {
       return false;
     }
-    return true;
   }
   
-  // Arctic Ocean
-  if (lat >= 70) {
-    return true;
+  // Major inland areas of Africa
+  if (lat >= -35 && lat <= 40 && lon >= -20 && lon <= 55) {
+    // Exclude central/inland Africa, but allow coastal areas
+    if (lat >= -25 && lat <= 30 && lon >= -5 && lon <= 40) {
+      return false;
+    }
   }
   
-  // Antarctic Ocean
-  if (lat <= -60) {
-    return true;
+  // Major inland areas of Asia
+  if (lat >= 10 && lat <= 75 && lon >= 60 && lon <= 150) {
+    // Exclude central/inland Asia, but allow coastal areas
+    if (lat >= 20 && lat <= 65 && lon >= 75 && lon <= 135) {
+      return false;
+    }
   }
   
-  return false;
+  // Major inland areas of Australia
+  if (lat >= -45 && lat <= -10 && lon >= 110 && lon <= 160) {
+    // Exclude central/inland Australia, but allow coastal areas
+    if (lat >= -35 && lat <= -15 && lon >= 120 && lon <= 150) {
+      return false;
+    }
+  }
+  
+  // Accept all other locations (includes oceans, seas, coastal areas, and water bodies)
+  return true;
 };
 
 const MapView = ({ data, prediction, onLocationSelect }: MapViewProps) => {
