@@ -1,4 +1,3 @@
-
 import { useEffect, useRef, useState } from "react";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -19,6 +18,55 @@ interface MapViewProps {
   prediction?: Prediction | null;
   onLocationSelect: (lat: number, lon: number) => void;
 }
+
+// Simple function to check if coordinates are likely over ocean
+const isOceanLocation = (lat: number, lon: number): boolean => {
+  // Major ocean areas (simplified check)
+  // Atlantic Ocean
+  if (lon >= -80 && lon <= 20 && lat >= -60 && lat <= 70) {
+    // Exclude major landmasses
+    if ((lat >= 25 && lat <= 50 && lon >= -25 && lon <= 40) || // Europe/Africa
+        (lat >= 30 && lat <= 70 && lon >= -130 && lon <= -60) || // North America
+        (lat >= -35 && lat <= 35 && lon >= -20 && lon <= 50)) { // Africa
+      return false;
+    }
+    return true;
+  }
+  
+  // Pacific Ocean
+  if ((lon >= -180 && lon <= -60) || (lon >= 120 && lon <= 180)) {
+    // Exclude major landmasses
+    if ((lat >= 25 && lat <= 70 && lon >= -160 && lon <= -120) || // North America West Coast
+        (lat >= -50 && lat <= 10 && lon >= -90 && lon <= -70) || // South America
+        (lat >= -50 && lat <= 50 && lon >= 120 && lon <= 150)) { // Asia/Australia
+      return false;
+    }
+    return true;
+  }
+  
+  // Indian Ocean
+  if (lon >= 20 && lon <= 120 && lat >= -60 && lat <= 30) {
+    // Exclude major landmasses
+    if ((lat >= -35 && lat <= 35 && lon >= 20 && lon <= 50) || // Africa/Middle East
+        (lat >= -50 && lat <= -10 && lon >= 110 && lon <= 160) || // Australia
+        (lat >= 5 && lat <= 35 && lon >= 65 && lon <= 95)) { // India
+      return false;
+    }
+    return true;
+  }
+  
+  // Arctic Ocean
+  if (lat >= 70) {
+    return true;
+  }
+  
+  // Antarctic Ocean
+  if (lat <= -60) {
+    return true;
+  }
+  
+  return false;
+};
 
 const MapView = ({ data, prediction, onLocationSelect }: MapViewProps) => {
   const mapContainerRef = useRef<HTMLDivElement>(null);
@@ -81,9 +129,18 @@ const MapView = ({ data, prediction, onLocationSelect }: MapViewProps) => {
       // Create markers layer
       markersLayerRef.current = L.layerGroup().addTo(map);
       
-      // Set up click event
+      // Set up click event with ocean validation
       map.on('click', (e: L.LeafletMouseEvent) => {
         const { lat, lng } = e.latlng;
+        
+        // Check if location is over ocean
+        if (!isOceanLocation(lat, lng)) {
+          toast.error("Invalid location selected", {
+            description: "Please select a valid ocean location for fishing predictions"
+          });
+          return;
+        }
+        
         onLocationSelect(lat, lng);
         setSearchLat(lat.toFixed(6));
         setSearchLon(lng.toFixed(6));
@@ -95,7 +152,7 @@ const MapView = ({ data, prediction, onLocationSelect }: MapViewProps) => {
             color: 'rgba(0, 0, 255, 0.7)',
             fillOpacity: 0.7
           }).addTo(markersLayerRef.current)
-            .bindTooltip(`Selected Location<br>${lat.toFixed(6)}, ${lng.toFixed(6)}`);
+            .bindTooltip(`Selected Ocean Location<br>${lat.toFixed(6)}, ${lng.toFixed(6)}`);
             
           // Remove the marker after a delay
           setTimeout(() => {
@@ -105,7 +162,7 @@ const MapView = ({ data, prediction, onLocationSelect }: MapViewProps) => {
           }, 5000);
         }
         
-        toast.info(`Location selected: ${lat.toFixed(6)}, ${lng.toFixed(6)}`);
+        toast.success(`Ocean location selected: ${lat.toFixed(6)}, ${lng.toFixed(6)}`);
       });
       
       setMapLoaded(true);
@@ -243,6 +300,14 @@ const MapView = ({ data, prediction, onLocationSelect }: MapViewProps) => {
       return;
     }
     
+    // Check if location is over ocean
+    if (!isOceanLocation(lat, lon)) {
+      toast.error("Invalid location selected", {
+        description: "Please select a valid ocean location for fishing predictions"
+      });
+      return;
+    }
+    
     onLocationSelect(lat, lon);
     
     if (mapLoaded && leafletMapRef.current) {
@@ -263,11 +328,11 @@ const MapView = ({ data, prediction, onLocationSelect }: MapViewProps) => {
             shadowSize: [41, 41]
           })
         }).addTo(markersLayerRef.current)
-          .bindTooltip(`Searched Location<br>${lat.toFixed(6)}, ${lon.toFixed(6)}`);
+          .bindTooltip(`Searched Ocean Location<br>${lat.toFixed(6)}, ${lon.toFixed(6)}`);
       }
       
       leafletMapRef.current.setView([lat, lon], 6);
-      toast.info(`Map centered at ${lat.toFixed(6)}, ${lon.toFixed(6)}`);
+      toast.success(`Map centered at ocean location: ${lat.toFixed(6)}, ${lon.toFixed(6)}`);
     }
   };
   
@@ -376,13 +441,22 @@ const MapView = ({ data, prediction, onLocationSelect }: MapViewProps) => {
                       navigator.geolocation.getCurrentPosition(
                         (position) => {
                           const { latitude, longitude } = position.coords;
+                          
+                          // Check if current location is over ocean
+                          if (!isOceanLocation(latitude, longitude)) {
+                            toast.error("Current location is not over ocean", {
+                              description: "Please manually select a valid ocean location for fishing predictions"
+                            });
+                            return;
+                          }
+                          
                           setSearchLat(latitude.toFixed(6));
                           setSearchLon(longitude.toFixed(6));
                           onLocationSelect(latitude, longitude);
                           if (mapLoaded && leafletMapRef.current) {
                             leafletMapRef.current.setView([latitude, longitude], 6);
                           }
-                          toast.info(`Using your location: ${latitude.toFixed(6)}, ${longitude.toFixed(6)}`);
+                          toast.success(`Using your ocean location: ${latitude.toFixed(6)}, ${longitude.toFixed(6)}`);
                         },
                         () => {
                           toast.error("Could not get your location. Please enable location services.");
