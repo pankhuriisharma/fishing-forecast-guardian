@@ -19,6 +19,10 @@ const Index = () => {
   const [prediction, setPrediction] = useState<Prediction | null>(null);
   const [selectedLocation, setSelectedLocation] = useState<[number, number] | null>(null);
 
+  const handleLocationSelect = (lat: number, lon: number) => {
+    setSelectedLocation([lat, lon]);
+  };
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50">
       <Header />
@@ -47,15 +51,14 @@ const Index = () => {
             <MapView
               data={data}
               prediction={prediction}
-              onLocationSelect={setSelectedLocation}
+              onLocationSelect={handleLocationSelect}
             />
             <ModelResults
               trainedModel={trainedModel}
               prediction={prediction}
             />
             <ResultCharts
-              trainedModel={trainedModel}
-              data={data}
+              data={data || []}
             />
           </div>
         </div>
