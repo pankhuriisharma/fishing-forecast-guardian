@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -14,7 +15,7 @@ interface ResultChartsProps {
 const ResultCharts = ({ data }: ResultChartsProps) => {
   const [activeTab, setActiveTab] = useState("hourly");
   
-  if (!data || data.length === 0) {
+  if (data.length === 0) {
     return (
       <Card className="w-full bg-white/80 backdrop-blur-sm border border-slate-200 shadow-md animate-fade-in">
         <CardHeader className="pb-3">

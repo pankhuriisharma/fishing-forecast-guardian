@@ -14,7 +14,7 @@ import 'leaflet/dist/leaflet.css';
 import 'leaflet.heat';
 
 interface MapViewProps {
-  data: FishingData[] | null;
+  data: FishingData[];
   prediction?: Prediction | null;
   onLocationSelect: (lat: number, lon: number) => void;
 }
@@ -199,8 +199,7 @@ const MapView = ({ data, prediction, onLocationSelect }: MapViewProps) => {
       heatLayerRef.current = null;
     }
     
-    // Handle null or empty data
-    if (!data || data.length === 0) return;
+    if (data.length === 0) return;
     
     try {
       // Process data for heatmap - all points with intensity based on illegal status

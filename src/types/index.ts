@@ -67,6 +67,5 @@ export interface TrainedModel {
   type: ModelType;
   accuracy: number;
   confusionMatrix: number[][];
-  params?: ModelParams;
-  id?: string;
+  params: ModelParams;
 }

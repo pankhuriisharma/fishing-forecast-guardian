@@ -9,7 +9,6 @@ import { TrainedModel, Prediction } from "@/types";
 import { predictIllegalFishing } from "@/utils/fishingModels";
 import { Clock, Locate, AlertTriangle, ArrowRight, BarChart3 } from "lucide-react";
 import { toast } from "sonner";
-import { supabase } from "@/integrations/supabase/client";
 
 interface PredictionFormProps {
   trainedModel: TrainedModel | null;
@@ -30,49 +29,8 @@ const PredictionForm = ({ trainedModel, location, onPredict }: PredictionFormPro
     if (probability > 0.4) return "text-amber-500";
     return "text-green-500";
   };
-
-  const savePredictionToDatabase = async (prediction: Prediction, modelId?: string) => {
-    try {
-      let modelResultId = null;
-      
-      // Try to find the latest model result for this model type
-      if (trainedModel?.type) {
-        const { data: modelResults } = await (supabase as any)
-          .from('ml_model_results')
-          .select('id')
-          .eq('model_name', trainedModel.type)
-          .order('created_at', { ascending: false })
-          .limit(1);
-        
-        if (modelResults && modelResults.length > 0) {
-          modelResultId = modelResults[0].id;
-        }
-      }
-
-      const predictionData = {
-        model_result_id: modelResultId,
-        latitude: prediction.location[0],
-        longitude: prediction.location[1],
-        hour: prediction.hour,
-        prediction_result: prediction.result,
-        prediction_probability: prediction.probability
-      };
-
-      const { error } = await (supabase as any)
-        .from('model_predictions')
-        .insert(predictionData);
-
-      if (error) {
-        console.error('Error saving prediction:', error);
-      } else {
-        console.log('Prediction saved successfully');
-      }
-    } catch (error) {
-      console.error('Error in savePredictionToDatabase:', error);
-    }
-  };
   
-  const handlePredict = async () => {
+  const handlePredict = () => {
     if (!location) {
       toast.error("Please select a location on the map first");
       return;
@@ -86,10 +44,10 @@ const PredictionForm = ({ trainedModel, location, onPredict }: PredictionFormPro
     setIsSubmitting(true);
     
     // Simulate a brief delay for prediction calculation
-    setTimeout(async () => {
+    setTimeout(() => {
       try {
         const [lat, lon] = location;
-        const prediction = await predictIllegalFishing(lat, lon, hour);
+        const prediction = predictIllegalFishing(lat, lon, hour);
         
         const result: Prediction = {
           result: prediction.result,
@@ -98,11 +56,8 @@ const PredictionForm = ({ trainedModel, location, onPredict }: PredictionFormPro
           hour
         };
         
-        // Save prediction to database
-        await savePredictionToDatabase(result, trainedModel.id);
-        
         onPredict(result);
-        toast.success("Prediction calculated and saved successfully");
+        toast.success("Prediction calculated successfully");
       } catch (error) {
         toast.error(`Prediction failed: ${(error as Error).message}`);
       } finally {
