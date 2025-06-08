@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -36,7 +37,7 @@ const PredictionForm = ({ trainedModel, location, onPredict }: PredictionFormPro
       
       // Try to find the latest model result for this model type
       if (trainedModel?.type) {
-        const { data: modelResults } = await supabase
+        const { data: modelResults } = await (supabase as any)
           .from('ml_model_results')
           .select('id')
           .eq('model_name', trainedModel.type)
@@ -57,7 +58,7 @@ const PredictionForm = ({ trainedModel, location, onPredict }: PredictionFormPro
         prediction_probability: prediction.probability
       };
 
-      const { error } = await supabase
+      const { error } = await (supabase as any)
         .from('model_predictions')
         .insert(predictionData);
 
@@ -88,7 +89,7 @@ const PredictionForm = ({ trainedModel, location, onPredict }: PredictionFormPro
     setTimeout(async () => {
       try {
         const [lat, lon] = location;
-        const prediction = predictIllegalFishing(lat, lon, hour);
+        const prediction = await predictIllegalFishing(lat, lon, hour);
         
         const result: Prediction = {
           result: prediction.result,

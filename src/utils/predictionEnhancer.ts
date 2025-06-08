@@ -12,7 +12,7 @@ export interface HistoricalPrediction {
 
 export const getHistoricalPredictions = async (): Promise<HistoricalPrediction[]> => {
   try {
-    const { data, error } = await supabase
+    const { data, error } = await (supabase as any)
       .from('model_predictions')
       .select('latitude, longitude, hour, prediction_result, prediction_probability, actual_result')
       .order('created_at', { ascending: false })
@@ -73,7 +73,7 @@ export const enhancePredictionWithHistory = async (
 
 export const getModelAccuracyTrend = async (modelName: string): Promise<number[]> => {
   try {
-    const { data, error } = await supabase
+    const { data, error } = await (supabase as any)
       .from('ml_model_results')
       .select('accuracy, created_at')
       .eq('model_name', modelName)
@@ -85,7 +85,7 @@ export const getModelAccuracyTrend = async (modelName: string): Promise<number[]
       return [];
     }
 
-    return data.map(result => result.accuracy);
+    return data.map((result: any) => result.accuracy);
   } catch (error) {
     console.error('Error in getModelAccuracyTrend:', error);
     return [];
