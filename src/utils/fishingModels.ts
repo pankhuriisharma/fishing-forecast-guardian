@@ -1,5 +1,5 @@
-
 import { ModelDefinition, ModelType } from "../types";
+import { enhancePredictionWithHistory } from "./predictionEnhancer";
 
 export const modelDefinitions: Record<ModelType, ModelDefinition> = {
   "Random Forest": {
@@ -98,13 +98,13 @@ export const trainModel = (
   };
 };
 
-// Mockup function to predict illegal fishing
-export const predictIllegalFishing = (
+// Enhanced prediction function that uses historical data
+export const predictIllegalFishing = async (
   latitude: number,
   longitude: number,
   hour: number
-): { result: boolean; probability: number } => {
-  // Simple mockup logic for prediction
+): Promise<{ result: boolean; probability: number }> => {
+  // Simple mockup logic for base prediction
   // Real implementation would use the trained model
   
   // Distance from the equator increases likelihood (just for demo)
@@ -116,12 +116,20 @@ export const predictIllegalFishing = (
   // Random factor
   const randomFactor = Math.random() * 0.2;
   
-  // Calculate probability
-  let probability = 0.3 + latEffect + hourEffect + randomFactor;
-  probability = Math.max(0, Math.min(1, probability)); // Ensure between 0 and 1
+  // Calculate base probability
+  let baseProbability = 0.3 + latEffect + hourEffect + randomFactor;
+  baseProbability = Math.max(0, Math.min(1, baseProbability)); // Ensure between 0 and 1
   
-  return {
-    result: probability > 0.5,
-    probability
+  const basePrediction = {
+    result: baseProbability > 0.5,
+    probability: baseProbability
   };
+
+  // Enhance with historical data
+  try {
+    return await enhancePredictionWithHistory(latitude, longitude, hour, basePrediction);
+  } catch (error) {
+    console.error('Error enhancing prediction, using base prediction:', error);
+    return basePrediction;
+  }
 };

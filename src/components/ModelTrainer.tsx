@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -9,6 +8,7 @@ import { FishingData, TrainedModel } from "@/types";
 import { UploadCloud, Brain, CheckCircle, AlertCircle, Zap, Server } from "lucide-react";
 import { toast } from "sonner";
 import { trainModel } from "@/utils/fishingModels";
+import { supabase } from "@/integrations/supabase/client";
 
 interface ModelTrainerProps {
   data: FishingData[] | null;
@@ -32,6 +32,77 @@ const ModelTrainer = ({ data, onModelTrained }: ModelTrainerProps) => {
   const [trainedModels, setTrainedModels] = useState<ModelResult[]>([]);
   const [useLocalTraining, setUseLocalTraining] = useState(false);
 
+  const saveDatasetToDatabase = async (data: FishingData[]): Promise<string | null> => {
+    try {
+      // Save dataset info
+      const { data: datasetResult, error: datasetError } = await supabase
+        .from('training_datasets')
+        .insert({
+          filename: 'uploaded_data.csv',
+          file_size: data.length * 50, // Approximate size
+          row_count: data.length,
+          column_count: 4
+        })
+        .select()
+        .single();
+
+      if (datasetError) {
+        console.error('Error saving dataset:', datasetError);
+        return null;
+      }
+
+      // Save individual data points
+      const dataPoints = data.map(point => ({
+        dataset_id: datasetResult.id,
+        latitude: point.lat,
+        longitude: point.lon,
+        hour: point.hour,
+        illegal: point.illegal === 1
+      }));
+
+      const { error: pointsError } = await supabase
+        .from('fishing_data_points')
+        .insert(dataPoints);
+
+      if (pointsError) {
+        console.error('Error saving data points:', pointsError);
+      }
+
+      return datasetResult.id;
+    } catch (error) {
+      console.error('Error in saveDatasetToDatabase:', error);
+      return null;
+    }
+  };
+
+  const saveModelResults = async (results: ModelResult[]): Promise<void> => {
+    try {
+      const modelData = results.map(result => ({
+        model_name: result.model_name,
+        accuracy: result.accuracy,
+        precision_score: result.precision,
+        recall_score: result.recall,
+        f1_score: result.f1_score,
+        confusion_matrix: result.confusion_matrix,
+        model_params: {},
+        training_data_size: data ? Math.floor(data.length * 0.8) : 0,
+        test_data_size: data ? Math.floor(data.length * 0.2) : 0
+      }));
+
+      const { error } = await supabase
+        .from('ml_model_results')
+        .insert(modelData);
+
+      if (error) {
+        console.error('Error saving model results:', error);
+      } else {
+        console.log('Model results saved successfully');
+      }
+    } catch (error) {
+      console.error('Error in saveModelResults:', error);
+    }
+  };
+
   const handleTrainAllModels = async () => {
     if (!data || data.length === 0) {
       toast.error("No data available for training");
@@ -43,6 +114,9 @@ const ModelTrainer = ({ data, onModelTrained }: ModelTrainerProps) => {
     setTrainedModels([]);
     setCurrentModel("Preparing data...");
 
+    // Save dataset to database first
+    const datasetId = await saveDatasetToDatabase(data);
+    
     try {
       // First try to connect to the backend
       await tryBackendTraining();
@@ -86,6 +160,9 @@ const ModelTrainer = ({ data, onModelTrained }: ModelTrainerProps) => {
       setProgress(100);
       setCurrentModel("Training completed!");
       setTrainedModels(result.results);
+
+      // Save results to database
+      await saveModelResults(result.results);
 
       // Update the parent component with the best model (highest accuracy)
       const bestModel = result.results.reduce((best: ModelResult, current: ModelResult) => 
@@ -150,6 +227,9 @@ const ModelTrainer = ({ data, onModelTrained }: ModelTrainerProps) => {
     setProgress(100);
     setCurrentModel("Local training completed!");
     setTrainedModels(results);
+
+    // Save results to database
+    await saveModelResults(results);
 
     // Update the parent component with the best model
     const bestModel = results.reduce((best, current) => 
