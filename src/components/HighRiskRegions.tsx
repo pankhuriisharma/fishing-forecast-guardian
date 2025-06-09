@@ -3,9 +3,11 @@ import { useState, useEffect } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { predictionService } from "@/services/predictionService";
-import { AlertTriangle, MapPin, Clock, TrendingUp } from "lucide-react";
+import { AlertTriangle, MapPin, Clock, TrendingUp, Database } from "lucide-react";
 import { useNavigate } from "react-router-dom";
+import RealTimeFishingData from "./RealTimeFishingData";
 
 interface HighRiskRegion {
   latitude: number;
@@ -82,34 +84,34 @@ const HighRiskRegions = () => {
     return { label: "Low", color: "bg-green-500" };
   };
 
-  if (loading) {
+  const HistoricalRiskRegions = () => {
+    if (loading) {
+      return (
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <TrendingUp className="h-5 w-5" />
+              Historical Risk Analysis
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="flex justify-center items-center h-32">
+              <div className="animate-spin h-8 w-8 border-2 border-current border-t-transparent rounded-full" />
+            </div>
+          </CardContent>
+        </Card>
+      );
+    }
+
     return (
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
-            <TrendingUp className="h-5 w-5" />
-            High Risk Regions
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="flex justify-center items-center h-32">
-            <div className="animate-spin h-8 w-8 border-2 border-current border-t-transparent rounded-full" />
-          </div>
-        </CardContent>
-      </Card>
-    );
-  }
-
-  return (
-    <div className="space-y-4">
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <AlertTriangle className="h-5 w-5 text-red-500" />
-            Top 10 High Risk Regions
+            <Database className="h-5 w-5 text-purple-500" />
+            Historical High Risk Regions
           </CardTitle>
           <CardDescription>
-            Regions with highest probability of illegal fishing based on historical predictions
+            Regions with highest probability of illegal fishing based on your prediction history
           </CardDescription>
         </CardHeader>
         <CardContent>
@@ -163,6 +165,31 @@ const HighRiskRegions = () => {
           )}
         </CardContent>
       </Card>
+    );
+  };
+
+  return (
+    <div className="space-y-4">
+      <Tabs defaultValue="realtime" className="w-full">
+        <TabsList className="grid w-full grid-cols-2">
+          <TabsTrigger value="realtime" className="flex items-center gap-2">
+            <AlertTriangle className="h-4 w-4" />
+            Real-Time Data
+          </TabsTrigger>
+          <TabsTrigger value="historical" className="flex items-center gap-2">
+            <Database className="h-4 w-4" />
+            Historical Analysis
+          </TabsTrigger>
+        </TabsList>
+        
+        <TabsContent value="realtime" className="space-y-4">
+          <RealTimeFishingData />
+        </TabsContent>
+        
+        <TabsContent value="historical" className="space-y-4">
+          <HistoricalRiskRegions />
+        </TabsContent>
+      </Tabs>
       
       <div className="flex justify-center">
         <Button 
