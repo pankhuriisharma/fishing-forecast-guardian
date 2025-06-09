@@ -42,14 +42,25 @@ const ModelResults = ({ trainedModel, prediction }: ModelResultsProps) => {
   
   const { accuracy, confusionMatrix, type } = trainedModel;
   
-  // Compute precision and recall from confusion matrix
-  const truePositives = confusionMatrix[1][1];
-  const falsePositives = confusionMatrix[0][1];
-  const falseNegatives = confusionMatrix[1][0];
+  // Safely compute precision and recall from confusion matrix
+  let precision = 0;
+  let recall = 0;
+  let f1Score = 0;
   
-  const precision = truePositives / (truePositives + falsePositives) || 0;
-  const recall = truePositives / (truePositives + falseNegatives) || 0;
-  const f1Score = 2 * ((precision * recall) / (precision + recall)) || 0;
+  if (confusionMatrix && Array.isArray(confusionMatrix) && confusionMatrix.length >= 2) {
+    const row0 = confusionMatrix[0];
+    const row1 = confusionMatrix[1];
+    
+    if (Array.isArray(row0) && Array.isArray(row1) && row0.length >= 2 && row1.length >= 2) {
+      const truePositives = row1[1] || 0;
+      const falsePositives = row0[1] || 0;
+      const falseNegatives = row1[0] || 0;
+      
+      precision = truePositives / (truePositives + falsePositives) || 0;
+      recall = truePositives / (truePositives + falseNegatives) || 0;
+      f1Score = 2 * ((precision * recall) / (precision + recall)) || 0;
+    }
+  }
   
   return (
     <Card className="w-full bg-white/80 backdrop-blur-sm border border-slate-200 shadow-md animate-fade-in">

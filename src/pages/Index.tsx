@@ -46,7 +46,7 @@ const Index = () => {
     setSelectedLocation([lat, lon]);
   };
   
-  const handleTrainModel = () => {
+  const handleTrainModel = async () => {
     if (fishingData.length === 0) {
       toast.error("No data available for training");
       return;
@@ -55,38 +55,40 @@ const Index = () => {
     setIsTraining(true);
     setTrainedModel(null); // Reset previous model
     
-    // Simulate training delay
-    setTimeout(() => {
-      try {
-        // Split data into training and testing sets
-        const { train, test } = splitData(fishingData);
-        
-        // Prepare data for training
-        const trainData = prepareTrainingData(train);
-        const testData = prepareTrainingData(test);
-        
-        // Train model
-        const result = trainModel(selectedModel, testData, modelParams);
-        
-        const newTrainedModel: TrainedModel = {
-          type: selectedModel,
-          accuracy: result.accuracy,
-          confusionMatrix: result.confusionMatrix,
-          params: modelParams
-        };
-        
-        setTrainedModel(newTrainedModel);
-        setActiveTab("predict"); // Move to predict tab after model is trained
-        
-        toast.success("Model training completed", {
-          description: `${selectedModel} model trained with ${(result.accuracy * 100).toFixed(1)}% accuracy`
-        });
-      } catch (error) {
-        toast.error(`Model training failed: ${(error as Error).message}`);
-      } finally {
-        setIsTraining(false);
-      }
-    }, 2000);
+    try {
+      // Split data into training and testing sets
+      const { train, test } = splitData(fishingData);
+      
+      // Prepare data for training
+      const trainData = prepareTrainingData(train);
+      const testData = prepareTrainingData(test);
+      
+      // Upload dataset and train model
+      const file = new File([JSON.stringify(trainData)], 'training_data.json', { type: 'application/json' });
+      const uploadResult = await uploadDataset(file);
+      
+      // Train model using the backend
+      const result = await trainModel(selectedModel, uploadResult.dataset_id, modelParams);
+      
+      const newTrainedModel: TrainedModel = {
+        type: selectedModel,
+        accuracy: result.accuracy,
+        confusionMatrix: result.confusionMatrix,
+        params: modelParams
+      };
+      
+      setTrainedModel(newTrainedModel);
+      setActiveTab("predict"); // Move to predict tab after model is trained
+      
+      toast.success("Model training completed", {
+        description: `${selectedModel} model trained with ${(result.accuracy * 100).toFixed(1)}% accuracy`
+      });
+    } catch (error) {
+      console.error('Training error:', error);
+      toast.error(`Model training failed: ${(error as Error).message}`);
+    } finally {
+      setIsTraining(false);
+    }
   };
   
   const handlePredict = (newPrediction: Prediction) => {
