@@ -1,8 +1,9 @@
+
 import { useState, useEffect } from "react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
 import { FishingData, ModelType, TrainedModel, Prediction } from "@/types";
-import { trainModel, modelDefinitions } from "@/utils/fishingModels";
+import { trainModel, modelDefinitions, uploadDataset } from "@/utils/fishingModels";
 import { prepareTrainingData, splitData, generateMockData } from "@/utils/dataProcessor";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
