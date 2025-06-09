@@ -1,5 +1,6 @@
 
 import { ModelDefinition, ModelType } from "../types";
+import { apiClient, TrainingResult } from "./apiClient";
 
 export const modelDefinitions: Record<ModelType, ModelDefinition> = {
   "Random Forest": {
@@ -10,7 +11,7 @@ export const modelDefinitions: Record<ModelType, ModelDefinition> = {
     color: "bg-green-600"
   },
   "SVM": {
-    name: "Support Vector Machine",
+    name: "Support Vector Machine", 
     description: "A classifier that finds the optimal boundary to separate classes in high-dimensional space.",
     accuracy: "75-85%",
     icon: "divide",
@@ -38,7 +39,7 @@ export const modelDefinitions: Record<ModelType, ModelDefinition> = {
     color: "bg-red-600"
   },
   "Neural Network": {
-    name: "Neural Network",
+    name: "Neural Network", 
     description: "A deep learning model that mimics human brain structure to recognize complex patterns in data.",
     accuracy: "78-92%",
     icon: "network",
@@ -46,59 +47,51 @@ export const modelDefinitions: Record<ModelType, ModelDefinition> = {
   }
 };
 
-// Mockup function to simulate model training
-export const trainModel = (
+// Function to train model using the backend
+export const trainModel = async (
   model: ModelType,
-  data: { X: number[][], y: number[] },
-  params: any
-): { accuracy: number; confusionMatrix: number[][] } => {
-  // Simulate model training with different accuracies based on model type
-  let baseAccuracy = 0;
-  
-  switch (model) {
-    case "Random Forest":
-      baseAccuracy = 0.85;
-      break;
-    case "Neural Network":
-      baseAccuracy = 0.84;
-      break;
-    case "SVM":
-      baseAccuracy = 0.82;
-      break;
-    case "Logistic Regression":
-      baseAccuracy = 0.76;
-      break;
-    case "Decision Tree":
-      baseAccuracy = 0.72;
-      break;
-    case "KNN":
-      baseAccuracy = 0.68;
-      break;
-    default:
-      baseAccuracy = 0.75;
+  datasetId: string,
+  params?: any
+): Promise<{ accuracy: number; confusionMatrix: number[][] }> => {
+  try {
+    console.log(`Training ${model} model with dataset ${datasetId}...`);
+    const result: TrainingResult = await apiClient.trainModel(datasetId, model);
+    
+    return {
+      accuracy: result.accuracy,
+      confusionMatrix: result.confusion_matrix
+    };
+  } catch (error) {
+    console.error(`Error training ${model} model:`, error);
+    throw new Error(`Failed to train ${model} model: ${(error as Error).message}`);
   }
-  
-  // Add random variation
-  const accuracy = baseAccuracy + (Math.random() * 0.1 - 0.05);
-  
-  // Create a simple confusion matrix
-  // For binary classification: [[TN, FP], [FN, TP]]
-  const numSamples = data.y.length;
-  const truePositives = Math.floor(numSamples * accuracy * 0.4);
-  const trueNegatives = Math.floor(numSamples * accuracy * 0.6);
-  const falsePositives = Math.floor(numSamples * (1 - accuracy) * 0.5);
-  const falseNegatives = numSamples - truePositives - trueNegatives - falsePositives;
-  
-  return {
-    accuracy,
-    confusionMatrix: [
-      [trueNegatives, falsePositives],
-      [falseNegatives, truePositives]
-    ]
-  };
 };
 
-// Mockup function to predict illegal fishing
+// Function to train all models using the backend
+export const trainAllModels = async (datasetId: string) => {
+  try {
+    console.log('Training all models with dataset', datasetId);
+    const result = await apiClient.trainAllModels(datasetId);
+    return result;
+  } catch (error) {
+    console.error('Error training all models:', error);
+    throw new Error(`Failed to train models: ${(error as Error).message}`);
+  }
+};
+
+// Upload dataset to backend
+export const uploadDataset = async (file: File) => {
+  try {
+    console.log('Uploading dataset:', file.name);
+    const result = await apiClient.uploadDataset(file);
+    return result;
+  } catch (error) {
+    console.error('Error uploading dataset:', error);
+    throw new Error(`Failed to upload dataset: ${(error as Error).message}`);
+  }
+};
+
+// Mockup function to predict illegal fishing (kept for fallback)
 export const predictIllegalFishing = (
   latitude: number,
   longitude: number,

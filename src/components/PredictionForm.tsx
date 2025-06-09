@@ -6,8 +6,8 @@ import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import { Slider } from "@/components/ui/slider";
 import { TrainedModel, Prediction } from "@/types";
-import { predictIllegalFishing } from "@/utils/fishingModels";
-import { Clock, Locate, AlertTriangle, ArrowRight, BarChart3 } from "lucide-react";
+import { predictionService } from "@/services/predictionService";
+import { Clock, Locate, AlertTriangle, ArrowRight, BarChart3, Database } from "lucide-react";
 import { toast } from "sonner";
 
 interface PredictionFormProps {
@@ -19,18 +19,13 @@ interface PredictionFormProps {
 const PredictionForm = ({ trainedModel, location, onPredict }: PredictionFormProps) => {
   const [hour, setHour] = useState<number>(12);
   const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
+  const [usingCachedResult, setUsingCachedResult] = useState<boolean>(false);
   
   const formatHour = (value: number): string => {
     return `${value.toString().padStart(2, '0')}:00`;
   };
   
-  const getLikelihoodColor = (probability: number): string => {
-    if (probability > 0.7) return "text-red-500";
-    if (probability > 0.4) return "text-amber-500";
-    return "text-green-500";
-  };
-  
-  const handlePredict = () => {
+  const handlePredict = async () => {
     if (!location) {
       toast.error("Please select a location on the map first");
       return;
@@ -42,28 +37,31 @@ const PredictionForm = ({ trainedModel, location, onPredict }: PredictionFormPro
     }
     
     setIsSubmitting(true);
+    setUsingCachedResult(false);
     
-    // Simulate a brief delay for prediction calculation
-    setTimeout(() => {
-      try {
-        const [lat, lon] = location;
-        const prediction = predictIllegalFishing(lat, lon, hour);
-        
-        const result: Prediction = {
-          result: prediction.result,
-          probability: prediction.probability,
-          location: [lat, lon],
-          hour
-        };
-        
-        onPredict(result);
-        toast.success("Prediction calculated successfully");
-      } catch (error) {
-        toast.error(`Prediction failed: ${(error as Error).message}`);
-      } finally {
-        setIsSubmitting(false);
+    try {
+      const [lat, lon] = location;
+      
+      // Check for existing prediction first
+      const existingPrediction = await predictionService.checkExistingPrediction(
+        lat, lon, hour, trainedModel.type
+      );
+      
+      if (existingPrediction) {
+        setUsingCachedResult(true);
+        onPredict(existingPrediction);
+        toast.success("Using cached prediction result from database");
+      } else {
+        // Make new prediction via backend
+        const prediction = await predictionService.makePrediction(lat, lon, hour, trainedModel.type);
+        onPredict(prediction);
+        toast.success("New prediction calculated and stored");
       }
-    }, 800);
+    } catch (error) {
+      toast.error(`Prediction failed: ${(error as Error).message}`);
+    } finally {
+      setIsSubmitting(false);
+    }
   };
   
   return (
@@ -76,10 +74,18 @@ const PredictionForm = ({ trainedModel, location, onPredict }: PredictionFormPro
               Set parameters and predict illegal fishing likelihood
             </CardDescription>
           </div>
-          <Badge variant="outline" className="bg-primary/10">
-            <BarChart3 className="w-3 h-3 mr-1" />
-            Prediction
-          </Badge>
+          <div className="flex gap-2">
+            <Badge variant="outline" className="bg-primary/10">
+              <BarChart3 className="w-3 h-3 mr-1" />
+              Prediction
+            </Badge>
+            {usingCachedResult && (
+              <Badge variant="outline" className="bg-green-100 text-green-800">
+                <Database className="w-3 h-3 mr-1" />
+                Cached
+              </Badge>
+            )}
+          </div>
         </div>
       </CardHeader>
       <CardContent className="space-y-4">

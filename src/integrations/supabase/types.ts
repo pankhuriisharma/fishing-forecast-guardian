@@ -9,7 +9,130 @@ export type Json =
 export type Database = {
   public: {
     Tables: {
-      [_ in never]: never
+      datasets: {
+        Row: {
+          columns: string[]
+          created_at: string | null
+          data: Json
+          id: string
+          name: string
+          size: number
+        }
+        Insert: {
+          columns: string[]
+          created_at?: string | null
+          data: Json
+          id?: string
+          name: string
+          size: number
+        }
+        Update: {
+          columns?: string[]
+          created_at?: string | null
+          data?: Json
+          id?: string
+          name?: string
+          size?: number
+        }
+        Relationships: []
+      }
+      model_trainings: {
+        Row: {
+          accuracy: number
+          confusion_matrix: Json
+          created_at: string | null
+          dataset_id: string | null
+          f1_score: number
+          id: string
+          model_type: string
+          parameters: Json
+          precision: number
+          recall: number
+          test_size: number
+          train_size: number
+        }
+        Insert: {
+          accuracy: number
+          confusion_matrix: Json
+          created_at?: string | null
+          dataset_id?: string | null
+          f1_score: number
+          id?: string
+          model_type: string
+          parameters: Json
+          precision: number
+          recall: number
+          test_size: number
+          train_size: number
+        }
+        Update: {
+          accuracy?: number
+          confusion_matrix?: Json
+          created_at?: string | null
+          dataset_id?: string | null
+          f1_score?: number
+          id?: string
+          model_type?: string
+          parameters?: Json
+          precision?: number
+          recall?: number
+          test_size?: number
+          train_size?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "model_trainings_dataset_id_fkey"
+            columns: ["dataset_id"]
+            isOneToOne: false
+            referencedRelation: "datasets"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      predictions: {
+        Row: {
+          created_at: string | null
+          hour: number
+          id: string
+          latitude: number
+          longitude: number
+          model_type: string
+          predicted_illegal: boolean
+          probability: number
+          training_id: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          hour: number
+          id?: string
+          latitude: number
+          longitude: number
+          model_type: string
+          predicted_illegal: boolean
+          probability: number
+          training_id?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          hour?: number
+          id?: string
+          latitude?: number
+          longitude?: number
+          model_type?: string
+          predicted_illegal?: boolean
+          probability?: number
+          training_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "predictions_training_id_fkey"
+            columns: ["training_id"]
+            isOneToOne: false
+            referencedRelation: "model_trainings"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Views: {
       [_ in never]: never
