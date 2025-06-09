@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
@@ -16,6 +15,7 @@ import ResultCharts from "@/components/ResultCharts";
 import GithubIcon from "@/components/GithubIcon";
 import { toast } from "sonner";
 import { Database, Brain, ChevronDown, Ship, UploadCloud, Beaker, Map } from "lucide-react";
+import HighRiskRegions from "@/components/HighRiskRegions";
 
 const Index = () => {
   const [fishingData, setFishingData] = useState<FishingData[]>([]);
@@ -312,6 +312,7 @@ const Index = () => {
                 
                 <div className="space-y-6">
                   <ModelResults trainedModel={trainedModel} prediction={prediction} />
+                  {trainedModel && <HighRiskRegions />}
                 </div>
               </div>
             </TabsContent>
@@ -344,6 +345,7 @@ const Index = () => {
                     prediction={prediction}
                     onLocationSelect={handleLocationSelect}
                   />
+                  <HighRiskRegions />
                 </div>
                 <div className="space-y-6">
                   <ResultCharts data={fishingData} />
