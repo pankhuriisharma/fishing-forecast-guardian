@@ -115,14 +115,28 @@ const HighRiskRegionsPage = () => {
             Back to Dashboard
           </Button>
           
-          <div className="text-center">
+          <div className="text-center mb-6">
             <h1 className="text-3xl font-bold mb-2 flex items-center justify-center gap-2">
               <AlertTriangle className="h-8 w-8 text-red-500" />
               High Risk Regions Analysis
             </h1>
             <p className="text-lg text-slate-600">
-              Detailed analysis of regions with highest illegal fishing probability
+              Comprehensive analysis of high-risk areas for illegal fishing activities
             </p>
+          </div>
+
+          {/* Overview Cards */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
+            <div className="bg-red-50 p-4 rounded-lg border border-red-200">
+              <div className="text-2xl font-bold text-red-600">{regions.length}</div>
+              <div className="text-sm text-red-700">Active High-Risk Regions</div>
+            </div>
+            <div className="bg-orange-50 p-4 rounded-lg border border-orange-200">
+              <div className="text-2xl font-bold text-orange-600">
+                {regions.filter(r => getRiskLevel(r.riskScore).label === 'Critical').length}
+              </div>
+              <div className="text-sm text-orange-700">Critical Risk Areas</div>
+            </div>
           </div>
         </div>
 

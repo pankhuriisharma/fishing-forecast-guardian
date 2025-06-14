@@ -5,8 +5,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { predictionService } from "@/services/predictionService";
-import { AlertTriangle, MapPin, Clock, TrendingUp, Database, Activity } from "lucide-react";
-import { useNavigate } from "react-router-dom";
+import { MapPin, Clock, TrendingUp, Database, Activity } from "lucide-react";
 import RealTimeFishingData from "./RealTimeFishingData";
 
 interface HighRiskRegion {
@@ -21,7 +20,6 @@ interface HighRiskRegion {
 const HighRiskRegions = () => {
   const [regions, setRegions] = useState<HighRiskRegion[]>([]);
   const [loading, setLoading] = useState(true);
-  const navigate = useNavigate();
 
   useEffect(() => {
     loadHighRiskRegions();
@@ -171,7 +169,7 @@ const HighRiskRegions = () => {
   return (
     <div className="space-y-4">
       <Tabs defaultValue="realtime" className="w-full">
-        <TabsList className="grid w-full grid-cols-3">
+        <TabsList className="grid w-full grid-cols-2">
           <TabsTrigger value="realtime" className="flex items-center gap-2">
             <Activity className="h-4 w-4" />
             Real-Time Data
@@ -179,10 +177,6 @@ const HighRiskRegions = () => {
           <TabsTrigger value="historical" className="flex items-center gap-2">
             <Database className="h-4 w-4" />
             Historical Analysis
-          </TabsTrigger>
-          <TabsTrigger value="risk-regions" className="flex items-center gap-2">
-            <AlertTriangle className="h-4 w-4" />
-            Risk Regions
           </TabsTrigger>
         </TabsList>
         
@@ -192,42 +186,6 @@ const HighRiskRegions = () => {
         
         <TabsContent value="historical" className="space-y-4">
           <HistoricalRiskRegions />
-        </TabsContent>
-
-        <TabsContent value="risk-regions" className="space-y-4">
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <AlertTriangle className="h-5 w-5 text-red-500" />
-                High Risk Regions Overview
-              </CardTitle>
-              <CardDescription>
-                Comprehensive analysis of high-risk areas for illegal fishing activities
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
-                <div className="bg-red-50 p-4 rounded-lg border border-red-200">
-                  <div className="text-2xl font-bold text-red-600">{regions.length}</div>
-                  <div className="text-sm text-red-700">Active High-Risk Regions</div>
-                </div>
-                <div className="bg-orange-50 p-4 rounded-lg border border-orange-200">
-                  <div className="text-2xl font-bold text-orange-600">
-                    {regions.filter(r => getRiskLevel(r.riskScore).label === 'Critical').length}
-                  </div>
-                  <div className="text-sm text-orange-700">Critical Risk Areas</div>
-                </div>
-              </div>
-              
-              <Button 
-                variant="outline" 
-                onClick={() => navigate("/high-risk-regions")}
-                className="w-full"
-              >
-                View Detailed Risk Analysis
-              </Button>
-            </CardContent>
-          </Card>
         </TabsContent>
       </Tabs>
     </div>
