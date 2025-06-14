@@ -16,6 +16,11 @@ import GithubIcon from "@/components/GithubIcon";
 import { toast } from "sonner";
 import { Database, Brain, ChevronDown, Ship, UploadCloud, Beaker, Map } from "lucide-react";
 import HighRiskRegions from "@/components/HighRiskRegions";
+import { createClient } from '@supabase/supabase-js';
+
+const supabaseUrl = "https://igxauoyjttwtyujsoxjt.supabase.co";
+const supabaseAnonKey = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImlneGF1b3lqdHR3dHl1anNveGp0Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDkzMDQ4ODUsImV4cCI6MjA2NDg4MDg4NX0.2yHE-O-HJtS8DLcfF52IFT9YHhSejGRtmjfi4V7Uw9g";
+const supabase = createClient(supabaseUrl, supabaseAnonKey);
 
 const Index = () => {
   const [fishingData, setFishingData] = useState<FishingData[]>([]);
@@ -31,6 +36,7 @@ const Index = () => {
   const [selectedLocation, setSelectedLocation] = useState<[number, number] | null>(null);
   const [prediction, setPrediction] = useState<Prediction | null>(null);
   const [isTraining, setIsTraining] = useState(false);
+  const [sendingEmail, setSendingEmail] = useState(false);
   
   const handleDataLoaded = (data: FishingData[]) => {
     setFishingData(data);
@@ -107,6 +113,23 @@ const Index = () => {
     }
   };
   
+  const handleSendEmailAlert = async () => {
+    setSendingEmail(true);
+    try {
+      const { data, error } = await supabase.functions.invoke('send-illegal-fishing-alerts');
+      if (error || !data) {
+        toast.error("Failed to send email alert", { description: error?.message || "API failure." });
+      } else if (data?.message) {
+        toast.success("Email notification sent!", { description: data.message });
+      } else {
+        toast("Request complete", { description: "The edge function ran but didn't return a standard response." });
+      }
+    } catch (err: any) {
+      toast.error("Failed to send email alert", { description: err.message });
+    }
+    setSendingEmail(false);
+  };
+  
   useEffect(() => {
     const demoData = generateMockData(100);
     setFishingData(demoData);
@@ -145,6 +168,18 @@ const Index = () => {
             >
               <GithubIcon className="h-5 w-5" />
               View on GitHub
+            </Button>
+            <Button
+              variant="secondary"
+              size="lg"
+              className="w-full sm:w-auto gap-2"
+              onClick={handleSendEmailAlert}
+              disabled={sendingEmail}
+            >
+              <span className="flex items-center gap-1">
+                <svg width="18" height="18" fill="none" stroke="currentColor" strokeWidth="2" className="inline-block mr-1" viewBox="0 0 24 24"><path d="M4 4h16v16H4V4z" stroke="none"/><path d="M22 6v12a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V6m16 0L12 13 4 6" /></svg>
+                {sendingEmail ? "Sending..." : "Get Email Update"}
+              </span>
             </Button>
           </div>
         </div>
