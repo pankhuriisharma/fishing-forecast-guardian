@@ -1,11 +1,14 @@
 
+// Replaces ALERT_EMAIL with a value accepted from the request payload.
+// Accepts POST requests with: { to_email: string }
+// Only sends an email if a valid email is provided.
+
 import "https://deno.land/x/xhr@0.1.0/mod.ts";
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { Resend } from "npm:resend@2.0.0";
 
 const resend = new Resend(Deno.env.get("RESEND_API_KEY"));
 
-const ALERT_EMAIL = "panjikarmohit21@gmail.com";
 const FETCH_FUNCTION_URL = `${Deno.env.get("SUPABASE_URL")}/functions/v1/fetch-fishing-data`;
 
 const corsHeaders = {
@@ -30,6 +33,27 @@ const handler = async (req: Request): Promise<Response> => {
   // Handle CORS preflight
   if (req.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders });
+  }
+
+  let to_email: string | undefined;
+
+  // Accept POST with JSON body { to_email }
+  if (req.method === "POST") {
+    try {
+      const json = await req.json();
+      if (typeof json.to_email === "string" && json.to_email.includes("@")) {
+        to_email = json.to_email.trim();
+      }
+    } catch (_err) {
+      // Ignore parsing error, will handle below
+    }
+  }
+
+  if (!to_email) {
+    return new Response(JSON.stringify({ error: "Missing or invalid email address." }), {
+      status: 400,
+      headers: { ...corsHeaders, "Content-Type": "application/json" },
+    });
   }
 
   try {
@@ -86,13 +110,13 @@ const handler = async (req: Request): Promise<Response> => {
           ${regionListHTML}
         </tbody>
       </table>
-      <p style="margin-top:1em;">This is an automated alert sent every 30 minutes.</p>
+      <p style="margin-top:1em;">This is an automated alert sent on request. (No scheduled alerts.)</p>
     `;
 
     // Send the email using Resend
     const emailResp = await resend.emails.send({
       from: "Illegal Fishing Alerts <onboarding@resend.dev>",
-      to: [ALERT_EMAIL],
+      to: [to_email],
       subject: "🚨 High-Risk Illegal Fishing Areas Detected",
       html: htmlMessage,
     });
@@ -113,3 +137,4 @@ const handler = async (req: Request): Promise<Response> => {
 };
 
 serve(handler);
+
