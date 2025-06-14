@@ -262,11 +262,11 @@ const HighRiskRegionsPage = () => {
                       </CardContent>
                     </Card>
                   );
-                })
-              )}
-            </div>
-          )}
-        </div>
+                })}
+              </div>
+            )}
+          </div>
+        )}
       </main>
       
       <Footer />
