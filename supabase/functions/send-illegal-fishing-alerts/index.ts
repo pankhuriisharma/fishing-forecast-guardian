@@ -1,3 +1,4 @@
+
 // Replaces ALERT_EMAIL with a value accepted from the request payload.
 // Accepts POST requests with: { to_email: string }
 // Only sends an email if a valid email is provided.
@@ -65,16 +66,23 @@ const handler = async (req: Request): Promise<Response> => {
       },
     });
 
+    console.log("Fetch response status:", response.status);
+
     if (!response.ok) {
-      throw new Error("Failed to fetch fishing data.");
+      const errorText = await response.text();
+      console.error("Fetch fishing data failed:", errorText);
+      throw new Error(`Failed to fetch fishing data: ${response.status} - ${errorText}`);
     }
 
-    const { data } = await response.json();
+    const responseData = await response.json();
+    console.log("Fetch response data:", responseData);
+
+    const data = responseData.data || responseData;
 
     if (!data?.high_risk_areas || !Array.isArray(data.high_risk_areas) || data.high_risk_areas.length === 0) {
       // No high risk areas found, do not send email
       console.log("No high risk areas to alert.");
-      return new Response(JSON.stringify({ message: "No high risk areas. No alert sent." }), {
+      return new Response(JSON.stringify({ message: "No high risk areas detected. No alert sent." }), {
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
@@ -109,7 +117,7 @@ const handler = async (req: Request): Promise<Response> => {
           ${regionListHTML}
         </tbody>
       </table>
-      <p style="margin-top:1em;">This is an automated alert sent on request. (No scheduled alerts.)</p>
+      <p style="margin-top:1em;">This is an automated alert sent on request.</p>
     `;
 
     // Send the email using Resend
@@ -122,7 +130,7 @@ const handler = async (req: Request): Promise<Response> => {
 
     console.log("Alert email sent:", emailResp);
 
-    return new Response(JSON.stringify({ message: "Alert sent.", email: emailResp }), {
+    return new Response(JSON.stringify({ message: `Alert sent to ${to_email}`, email: emailResp }), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
 
@@ -135,7 +143,7 @@ const handler = async (req: Request): Promise<Response> => {
     return new Response(
       JSON.stringify({
         error: errorMessage || "Unhandled edge function error (no message present)",
-        details: error,
+        details: error?.stack || error,
       }),
       {
         status: 500,
