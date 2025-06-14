@@ -105,168 +105,188 @@ const HighRiskRegionsPage = () => {
       <Header />
       
       <main className="flex-1 container mx-auto px-4 py-8">
-        <div className="max-w-6xl mx-auto">
-          <Button 
-            variant="outline" 
-            onClick={() => navigate("/")}
-            className="mb-6"
-          >
-            <ArrowLeft className="h-4 w-4 mr-2" />
-            Back to Dashboard
-          </Button>
+        <div className="max-w-7xl mx-auto">
+          <div className="flex justify-center mb-8">
+            <Button 
+              variant="outline" 
+              onClick={() => navigate("/")}
+              className="gap-2 hover:bg-slate-100 transition-colors"
+            >
+              <ArrowLeft className="h-4 w-4" />
+              Back to Dashboard
+            </Button>
+          </div>
           
-          {/* Hero Section */}
-          <div className="text-center mb-12">
-            <div className="flex items-center justify-center gap-3 mb-4">
-              <div className="p-3 bg-red-100 rounded-full">
-                <AlertTriangle className="h-10 w-10 text-red-600" />
+          {/* Hero Section - Centered */}
+          <div className="text-center mb-16 max-w-4xl mx-auto">
+            <div className="flex items-center justify-center gap-4 mb-6">
+              <div className="p-4 bg-gradient-to-br from-red-100 to-red-200 rounded-2xl shadow-lg">
+                <AlertTriangle className="h-12 w-12 text-red-600" />
               </div>
-              <h1 className="text-4xl font-bold text-gray-900">
-                High Risk Regions Analysis
-              </h1>
+              <div className="text-left">
+                <h1 className="text-5xl font-bold text-gray-900 mb-2">
+                  High Risk Regions
+                </h1>
+                <h2 className="text-2xl font-semibold text-gray-600">
+                  Analysis Dashboard
+                </h2>
+              </div>
             </div>
-            <p className="text-xl text-gray-600 max-w-3xl mx-auto">
-              Comprehensive analysis of high-risk areas for illegal fishing activities based on prediction data
+            <p className="text-xl text-gray-600 leading-relaxed max-w-3xl mx-auto">
+              Comprehensive analysis of high-risk areas for illegal fishing activities based on historical prediction data and machine learning insights
             </p>
           </div>
 
-          {/* Overview Cards */}
-          <div className="flex justify-center mb-12">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-8 max-w-2xl w-full">
-              <div className="bg-gradient-to-br from-red-50 to-red-100 p-8 rounded-2xl border-2 border-red-200 shadow-lg transform hover:scale-105 transition-transform duration-200">
+          {/* Overview Cards - Centered */}
+          <div className="flex justify-center mb-16">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-12 max-w-4xl w-full">
+              <div className="bg-gradient-to-br from-red-50 via-red-100 to-red-200 p-10 rounded-3xl border-2 border-red-200 shadow-xl transform hover:scale-105 transition-all duration-300 hover:shadow-2xl">
                 <div className="text-center">
-                  <div className="text-5xl font-bold text-red-600 mb-2">{regions.length}</div>
-                  <div className="text-lg font-semibold text-red-700">Active High-Risk Regions</div>
-                  <div className="text-sm text-red-600 mt-1">Identified from prediction history</div>
+                  <div className="text-6xl font-bold text-red-600 mb-4">{regions.length}</div>
+                  <div className="text-xl font-bold text-red-700 mb-2">Active High-Risk Regions</div>
+                  <div className="text-base text-red-600">Identified from prediction history</div>
                 </div>
               </div>
-              <div className="bg-gradient-to-br from-orange-50 to-orange-100 p-8 rounded-2xl border-2 border-orange-200 shadow-lg transform hover:scale-105 transition-transform duration-200">
+              <div className="bg-gradient-to-br from-orange-50 via-orange-100 to-orange-200 p-10 rounded-3xl border-2 border-orange-200 shadow-xl transform hover:scale-105 transition-all duration-300 hover:shadow-2xl">
                 <div className="text-center">
-                  <div className="text-5xl font-bold text-orange-600 mb-2">
+                  <div className="text-6xl font-bold text-orange-600 mb-4">
                     {regions.filter(r => getRiskLevel(r.riskScore).label === 'Critical').length}
                   </div>
-                  <div className="text-lg font-semibold text-orange-700">Critical Risk Areas</div>
-                  <div className="text-sm text-orange-600 mt-1">Requiring immediate attention</div>
+                  <div className="text-xl font-bold text-orange-700 mb-2">Critical Risk Areas</div>
+                  <div className="text-base text-orange-600">Requiring immediate attention</div>
                 </div>
               </div>
             </div>
           </div>
         </div>
 
-        {loading ? (
-          <div className="flex justify-center items-center h-64">
-            <div className="animate-spin h-12 w-12 border-4 border-current border-t-transparent rounded-full" />
-          </div>
-        ) : (
-          <div className="max-w-6xl mx-auto">
-            {regions.length === 0 ? (
-              <Card className="max-w-2xl mx-auto">
-                <CardContent className="text-center py-16">
-                  <TrendingUp className="h-16 w-16 mx-auto text-slate-400 mb-6" />
-                  <h3 className="text-2xl font-medium mb-4">No Risk Data Available</h3>
-                  <p className="text-slate-600 text-lg">
-                    Make some predictions to see risk pattern analysis.
-                  </p>
-                </CardContent>
-              </Card>
-            ) : (
-              <div className="grid gap-8">
-                {regions.map((region, index) => {
-                  const riskLevel = getRiskLevel(region.riskScore);
-                  return (
-                    <Card key={`${region.latitude}-${region.longitude}`} className="overflow-hidden shadow-lg hover:shadow-xl transition-shadow duration-300">
-                      <CardHeader className="pb-4 bg-gradient-to-r from-slate-50 to-slate-100">
-                        <div className="flex items-center justify-between">
-                          <div>
-                            <CardTitle className="flex items-center gap-4">
-                              <span className="text-3xl font-bold text-slate-400 bg-white px-3 py-1 rounded-lg">#{index + 1}</span>
-                              <div>
-                                <div className="flex items-center gap-2">
-                                  <MapPin className="h-6 w-6 text-blue-600" />
-                                  <span className="text-xl font-semibold">{region.latitude.toFixed(4)}, {region.longitude.toFixed(4)}</span>
-                                </div>
-                              </div>
-                            </CardTitle>
-                            <CardDescription className="flex items-center gap-6 mt-3 text-base">
-                              <span className="flex items-center gap-2">
-                                <Activity className="h-5 w-5 text-green-600" />
-                                {region.predictionCount} total predictions
-                              </span>
-                              <span className="flex items-center gap-2">
-                                <Clock className="h-5 w-5 text-blue-600" />
-                                Last: {new Date(region.lastPrediction).toLocaleDateString()}
-                              </span>
-                            </CardDescription>
-                          </div>
-                          <div className="text-right">
-                            <Badge className={`${riskLevel.color} text-white mb-3 text-sm px-3 py-1`}>
-                              {riskLevel.label} Risk
-                            </Badge>
-                            <div className="text-3xl font-bold text-gray-900">
-                              {(region.riskScore * 100).toFixed(1)}%
-                            </div>
-                            <div className="text-sm text-slate-500 font-medium">Risk Score</div>
-                          </div>
-                        </div>
-                      </CardHeader>
-                      
-                      <CardContent className="space-y-6 p-6">
-                        <div className="grid md:grid-cols-3 gap-6">
-                          <div className="bg-gradient-to-br from-red-50 to-red-100 p-4 rounded-xl border border-red-200">
-                            <div className="text-sm text-red-700 font-medium mb-1">Illegal Predictions</div>
-                            <div className="text-2xl font-bold text-red-600">
-                              {region.illegalCount} / {region.predictionCount}
-                            </div>
-                          </div>
-                          
-                          <div className="bg-gradient-to-br from-blue-50 to-blue-100 p-4 rounded-xl border border-blue-200">
-                            <div className="text-sm text-blue-700 font-medium mb-1">Avg Probability</div>
-                            <div className="text-2xl font-bold text-blue-600">
-                              {(region.avgProbability * 100).toFixed(1)}%
-                            </div>
-                          </div>
-                          
-                          <div className="bg-gradient-to-br from-purple-50 to-purple-100 p-4 rounded-xl border border-purple-200">
-                            <div className="text-sm text-purple-700 font-medium mb-1">Peak Hours</div>
-                            <div className="text-sm font-semibold text-purple-600">
-                              {region.hourlyPattern
-                                .sort((a, b) => b.count - a.count)
-                                .slice(0, 3)
-                                .map(h => `${h.hour}:00`)
-                                .join(", ")
-                              }
-                            </div>
-                          </div>
-                        </div>
-
-                        <div>
-                          <h4 className="font-semibold mb-3 text-lg">Recent Predictions</h4>
-                          <div className="space-y-3">
-                            {region.recentPredictions.map((pred, i) => (
-                              <div key={i} className="flex items-center justify-between text-sm p-4 bg-slate-50 rounded-lg border hover:bg-slate-100 transition-colors">
-                                <span className="font-medium">
-                                  Hour {pred.hour}:00 - {pred.model_type}
-                                </span>
-                                <div className="flex items-center gap-3">
-                                  <Badge variant={pred.predicted_illegal ? "destructive" : "secondary"} className="text-xs">
-                                    {pred.predicted_illegal ? "Illegal" : "Legal"}
-                                  </Badge>
-                                  <span className="font-mono font-bold text-gray-700">
-                                    {(pred.probability * 100).toFixed(1)}%
-                                  </span>
-                                </div>
-                              </div>
-                            ))}
-                          </div>
-                        </div>
-                      </CardContent>
-                    </Card>
-                  );
-                })}
+        {/* Content Section */}
+        <div className="max-w-6xl mx-auto">
+          {loading ? (
+            <div className="flex justify-center items-center h-80">
+              <div className="text-center">
+                <div className="animate-spin h-16 w-16 border-4 border-ocean border-t-transparent rounded-full mx-auto mb-4" />
+                <p className="text-xl text-gray-600">Loading risk analysis...</p>
               </div>
-            )}
-          </div>
-        )}
+            </div>
+          ) : (
+            <>
+              {regions.length === 0 ? (
+                <Card className="max-w-3xl mx-auto shadow-xl">
+                  <CardContent className="text-center py-20">
+                    <TrendingUp className="h-20 w-20 mx-auto text-slate-400 mb-8" />
+                    <h3 className="text-3xl font-bold mb-6 text-gray-900">No Risk Data Available</h3>
+                    <p className="text-xl text-slate-600 leading-relaxed">
+                      Make some predictions to see comprehensive risk pattern analysis and regional insights.
+                    </p>
+                  </CardContent>
+                </Card>
+              ) : (
+                <div className="space-y-10">
+                  <div className="text-center mb-12">
+                    <h3 className="text-3xl font-bold text-gray-900 mb-4">Detailed Regional Analysis</h3>
+                    <p className="text-lg text-gray-600">Explore each high-risk region with detailed metrics and recent activity patterns</p>
+                  </div>
+                  
+                  <div className="grid gap-10">
+                    {regions.map((region, index) => {
+                      const riskLevel = getRiskLevel(region.riskScore);
+                      return (
+                        <Card key={`${region.latitude}-${region.longitude}`} className="overflow-hidden shadow-xl hover:shadow-2xl transition-all duration-300 border-0">
+                          <CardHeader className="pb-6 bg-gradient-to-r from-slate-50 to-slate-100 border-b">
+                            <div className="flex items-center justify-between">
+                              <div className="flex-1">
+                                <CardTitle className="flex items-center gap-6 mb-4">
+                                  <span className="text-4xl font-bold text-slate-400 bg-white px-4 py-2 rounded-xl shadow-md">#{index + 1}</span>
+                                  <div>
+                                    <div className="flex items-center gap-3">
+                                      <MapPin className="h-7 w-7 text-blue-600" />
+                                      <span className="text-2xl font-bold text-gray-900">{region.latitude.toFixed(4)}, {region.longitude.toFixed(4)}</span>
+                                    </div>
+                                  </div>
+                                </CardTitle>
+                                <CardDescription className="flex items-center gap-8 text-base">
+                                  <span className="flex items-center gap-2">
+                                    <Activity className="h-5 w-5 text-green-600" />
+                                    <span className="font-semibold">{region.predictionCount} total predictions</span>
+                                  </span>
+                                  <span className="flex items-center gap-2">
+                                    <Clock className="h-5 w-5 text-blue-600" />
+                                    <span className="font-semibold">Last: {new Date(region.lastPrediction).toLocaleDateString()}</span>
+                                  </span>
+                                </CardDescription>
+                              </div>
+                              <div className="text-right">
+                                <Badge className={`${riskLevel.color} text-white mb-4 text-base px-4 py-2 font-bold`}>
+                                  {riskLevel.label} Risk
+                                </Badge>
+                                <div className="text-4xl font-bold text-gray-900 mb-1">
+                                  {(region.riskScore * 100).toFixed(1)}%
+                                </div>
+                                <div className="text-sm text-slate-500 font-semibold">Risk Score</div>
+                              </div>
+                            </div>
+                          </CardHeader>
+                          
+                          <CardContent className="space-y-8 p-8">
+                            <div className="grid md:grid-cols-3 gap-8">
+                              <div className="bg-gradient-to-br from-red-50 to-red-100 p-6 rounded-2xl border-2 border-red-200 shadow-lg">
+                                <div className="text-sm text-red-700 font-bold mb-2">Illegal Predictions</div>
+                                <div className="text-3xl font-bold text-red-600">
+                                  {region.illegalCount} / {region.predictionCount}
+                                </div>
+                              </div>
+                              
+                              <div className="bg-gradient-to-br from-blue-50 to-blue-100 p-6 rounded-2xl border-2 border-blue-200 shadow-lg">
+                                <div className="text-sm text-blue-700 font-bold mb-2">Avg Probability</div>
+                                <div className="text-3xl font-bold text-blue-600">
+                                  {(region.avgProbability * 100).toFixed(1)}%
+                                </div>
+                              </div>
+                              
+                              <div className="bg-gradient-to-br from-purple-50 to-purple-100 p-6 rounded-2xl border-2 border-purple-200 shadow-lg">
+                                <div className="text-sm text-purple-700 font-bold mb-2">Peak Hours</div>
+                                <div className="text-base font-bold text-purple-600">
+                                  {region.hourlyPattern
+                                    .sort((a, b) => b.count - a.count)
+                                    .slice(0, 3)
+                                    .map(h => `${h.hour}:00`)
+                                    .join(", ")
+                                  }
+                                </div>
+                              </div>
+                            </div>
+
+                            <div>
+                              <h4 className="font-bold mb-4 text-xl text-gray-900">Recent Predictions</h4>
+                              <div className="space-y-4">
+                                {region.recentPredictions.map((pred, i) => (
+                                  <div key={i} className="flex items-center justify-between p-5 bg-gradient-to-r from-slate-50 to-slate-100 rounded-xl border-2 border-slate-200 hover:from-slate-100 hover:to-slate-200 transition-all duration-200 shadow-md">
+                                    <span className="font-semibold text-gray-800">
+                                      Hour {pred.hour}:00 - {pred.model_type}
+                                    </span>
+                                    <div className="flex items-center gap-4">
+                                      <Badge variant={pred.predicted_illegal ? "destructive" : "secondary"} className="text-sm font-bold px-3 py-1">
+                                        {pred.predicted_illegal ? "Illegal" : "Legal"}
+                                      </Badge>
+                                      <span className="font-mono font-bold text-gray-700 text-lg">
+                                        {(pred.probability * 100).toFixed(1)}%
+                                      </span>
+                                    </div>
+                                  </div>
+                                ))}
+                              </div>
+                            </div>
+                          </CardContent>
+                        </Card>
+                      );
+                    })}
+                  </div>
+                </div>
+              )}
+            </>
+          )}
+        </div>
       </main>
       
       <Footer />
