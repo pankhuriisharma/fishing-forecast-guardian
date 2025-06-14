@@ -71,7 +71,19 @@ const handler = async (req: Request): Promise<Response> => {
     if (!response.ok) {
       const errorText = await response.text();
       console.error("Fetch fishing data failed:", errorText);
-      throw new Error(`Failed to fetch fishing data: ${response.status} - ${errorText}`);
+      // Attempt to parse JSON if possible for even more details
+      let errorJSON = null;
+      try { errorJSON = JSON.parse(errorText); } catch {}
+      return new Response(
+        JSON.stringify({
+          error: `Failed to fetch fishing data: ${response.status}`,
+          details: errorJSON || errorText
+        }),
+        {
+          status: 500,
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        }
+      );
     }
 
     const responseData = await response.json();
@@ -130,6 +142,20 @@ const handler = async (req: Request): Promise<Response> => {
 
     console.log("Alert email sent:", emailResp);
 
+    // Resend may itself return an error even on 200 HTTP status
+    if (emailResp?.error) {
+      return new Response(
+        JSON.stringify({
+          error: "Email sending failed.",
+          details: emailResp.error
+        }),
+        {
+          status: 500,
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        }
+      );
+    }
+
     return new Response(JSON.stringify({ message: `Alert sent to ${to_email}`, email: emailResp }), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
@@ -139,11 +165,12 @@ const handler = async (req: Request): Promise<Response> => {
     const errorMessage =
       error?.message ||
       (typeof error === "string" ? error : "An unknown error occurred in the edge function.");
-    console.error("Error in send-illegal-fishing-alerts (frontend user will see this):", errorMessage);
+    console.error("Error in send-illegal-fishing-alerts (frontend user will see this):", errorMessage, error);
+    // Provide as much diagnostic info as possible
     return new Response(
       JSON.stringify({
         error: errorMessage || "Unhandled edge function error (no message present)",
-        details: error?.stack || error,
+        details: error?.stack || error
       }),
       {
         status: 500,
@@ -154,3 +181,4 @@ const handler = async (req: Request): Promise<Response> => {
 };
 
 serve(handler);
+

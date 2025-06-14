@@ -5,7 +5,6 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
 
-// Props: open, onClose
 interface GetEmailUpdateDialogProps {
   open: boolean;
   onClose: () => void;
@@ -18,7 +17,6 @@ const GetEmailUpdateDialog: React.FC<GetEmailUpdateDialogProps> = ({ open, onClo
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    // rudimentary frontend validation
     if (!email.match(/^[^\s@]+@[^\s@]+\.[^\s@]+$/)) {
       toast.error("Please enter a valid email address.");
       return;
@@ -30,19 +28,28 @@ const GetEmailUpdateDialog: React.FC<GetEmailUpdateDialogProps> = ({ open, onClo
       const endpoint = `${supabaseUrl}/functions/v1/send-illegal-fishing-alerts`;
       const resp = await fetch(endpoint, {
         method: "POST",
-        headers: {
-          "Content-Type": "application/json"
-        },
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ to_email: email })
       });
       const data = await resp.json();
+
+      // Log all details for debug
+      console.log("Email alert response:", { resp, data });
+
       if (resp.ok && data.message) {
         toast.success("Email notification sent!", { description: data.message });
         onClose();
       } else {
-        // Improved error feedback
-        toast.error("Failed to send email alert", {
-          description: data.error || data.details || resp.statusText || "Unknown error.",
+        // Show error AND details if present
+        const details = data.details ? (
+          typeof data.details === "string"
+            ? data.details
+            : typeof data.details === "object"
+              ? JSON.stringify(data.details)
+              : ""
+        ) : "";
+        toast.error(data.error || "Failed to send email alert", {
+          description: (details && details !== data.error) ? details : (data.error || resp.statusText || "Unknown error.")
         });
       }
     } catch (err: any) {
@@ -80,3 +87,4 @@ const GetEmailUpdateDialog: React.FC<GetEmailUpdateDialogProps> = ({ open, onClo
 };
 
 export default GetEmailUpdateDialog;
+
