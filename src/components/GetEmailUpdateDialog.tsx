@@ -40,10 +40,13 @@ const GetEmailUpdateDialog: React.FC<GetEmailUpdateDialogProps> = ({ open, onClo
         toast.success("Email notification sent!", { description: data.message });
         onClose();
       } else {
-        toast.error("Failed to send email alert", { description: data.error || "Unknown error." });
+        // Improved error feedback
+        toast.error("Failed to send email alert", {
+          description: data.error || data.details || resp.statusText || "Unknown error.",
+        });
       }
     } catch (err: any) {
-      toast.error("Error sending email", { description: err.message });
+      toast.error("Error sending email", { description: err.message || String(err) });
     }
     setSending(false);
   };

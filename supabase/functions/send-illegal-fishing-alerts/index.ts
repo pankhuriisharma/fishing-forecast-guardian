@@ -1,4 +1,3 @@
-
 // Replaces ALERT_EMAIL with a value accepted from the request payload.
 // Accepts POST requests with: { to_email: string }
 // Only sends an email if a valid email is provided.
@@ -128,13 +127,22 @@ const handler = async (req: Request): Promise<Response> => {
     });
 
   } catch (error: any) {
-    console.error("Error in send-illegal-fishing-alerts:", error);
-    return new Response(JSON.stringify({ error: error.message }), {
-      status: 500,
-      headers: { ...corsHeaders, "Content-Type": "application/json" },
-    });
+    // Improved error reporting for frontend user and backend log clarity
+    const errorMessage =
+      error?.message ||
+      (typeof error === "string" ? error : "An unknown error occurred in the edge function.");
+    console.error("Error in send-illegal-fishing-alerts (frontend user will see this):", errorMessage);
+    return new Response(
+      JSON.stringify({
+        error: errorMessage || "Unhandled edge function error (no message present)",
+        details: error,
+      }),
+      {
+        status: 500,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      }
+    );
   }
 };
 
 serve(handler);
-
