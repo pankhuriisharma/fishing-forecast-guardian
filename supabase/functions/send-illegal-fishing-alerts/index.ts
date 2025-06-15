@@ -1,13 +1,12 @@
 
-// Replaces ALERT_EMAIL with a value accepted from the request payload.
+// Replaces Resend with MailerSend for sending emails.
 // Accepts POST requests with: { to_email: string }
-// Only sends an email if a valid email is provided.
+// Sends all visible "High-Risk Fishing Areas" in the email.
 
 import "https://deno.land/x/xhr@0.1.0/mod.ts";
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
-import { Resend } from "npm:resend@2.0.0";
 
-const resend = new Resend(Deno.env.get("RESEND_API_KEY"));
+const MAILERSEND_API_KEY = Deno.env.get("MAILERSEND_API_KEY");
 
 const FETCH_FUNCTION_URL = `${Deno.env.get("SUPABASE_URL")}/functions/v1/fetch-fishing-data`;
 
@@ -23,22 +22,25 @@ const handler = async (req: Request): Promise<Response> => {
   }
 
   let to_email: string | undefined;
-
-  // Accept POST with JSON body { to_email }
   if (req.method === "POST") {
     try {
       const json = await req.json();
       if (typeof json.to_email === "string" && json.to_email.includes("@")) {
         to_email = json.to_email.trim();
       }
-    } catch (_err) {
-      // Ignore parsing error, will handle below
-    }
+    } catch (_err) {}
   }
 
   if (!to_email) {
     return new Response(JSON.stringify({ error: "Missing or invalid email address." }), {
       status: 400,
+      headers: { ...corsHeaders, "Content-Type": "application/json" },
+    });
+  }
+
+  if (!MAILERSEND_API_KEY) {
+    return new Response(JSON.stringify({ error: "MailerSend API key is not set." }), {
+      status: 500,
       headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
   }
@@ -90,8 +92,7 @@ const handler = async (req: Request): Promise<Response> => {
         row.risk_level?.toLowerCase() === "critical"  ? "background:#dc2626;color:white;" : // Red
         row.risk_level?.toLowerCase() === "high"      ? "background:#f59e42;color:white;" : // Orange
         row.risk_level?.toLowerCase() === "medium"    ? "background:#eab308;color:white;" : // Yellow
-        "background:#22c55e;color:white;"; // Green
-      
+        "background:#22c55e;color:white;";
       return `<tr>
         <td style="padding:6px 8px;font-family:monospace;font-size:13px;">#${row.id || idx + 1}</td>
         <td style="padding:6px 8px;">${(row.latitude ?? 0).toFixed(3)}, ${(row.longitude ?? 0).toFixed(3)}</td>
@@ -127,19 +128,31 @@ const handler = async (req: Request): Promise<Response> => {
       <p style="margin-top:1.5em;font-size:13px;color:#666;">Stay vigilant! For more details, view data directly in the FishGuard app.</p>
     `;
 
-    // Send the email using Resend
-    const emailResp = await resend.emails.send({
-      from: "Illegal Fishing Alerts <onboarding@resend.dev>",
-      to: [to_email],
-      subject: "🚨 Real-Time High-Risk Illegal Fishing Areas",
-      html: htmlMessage,
+    // Send the email using MailerSend transactional email API
+    const mailerSendResp = await fetch("https://api.mailersend.com/v1/email", {
+      method: "POST",
+      headers: {
+        "Authorization": `Bearer ${MAILERSEND_API_KEY}`,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        from: {
+          email: "illegal-fishing-alert@mailersend.com",
+          name: "Illegal Fishing Alerts"
+        },
+        to: [{ email: to_email }],
+        subject: "🚨 Real-Time High-Risk Illegal Fishing Areas",
+        html: htmlMessage,
+      }),
     });
 
-    if (emailResp?.error) {
+    const mailerSendData = await mailerSendResp.json();
+
+    if (!mailerSendResp.ok) {
       return new Response(
         JSON.stringify({
-          error: "Email sending failed.",
-          details: emailResp.error
+          error: "Email sending failed (MailerSend).",
+          details: mailerSendData?.message || mailerSendData,
         }),
         {
           status: 500,
@@ -149,7 +162,7 @@ const handler = async (req: Request): Promise<Response> => {
     }
 
     return new Response(
-      JSON.stringify({ message: `Alert sent to ${to_email} with latest fishing risk data`, email: emailResp }),
+      JSON.stringify({ message: `Alert sent to ${to_email} with latest fishing risk data`, email: mailerSendData }),
       { headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );
 
