@@ -393,7 +393,12 @@ const Index = () => {
         </div>
       </main>
       
-      <ArticlesAndInsights />
+      {/* New: visually separated Articles & Insights section */}
+      <section aria-label="Articles & Insights" className="w-full mt-10 mb-0">
+        <div className="border-t border-slate-200 my-0" />
+        <ArticlesAndInsights />
+      </section>
+      
       <Footer />
       <GetEmailUpdateDialog open={emailDialogOpen} onClose={() => setEmailDialogOpen(false)} />
     </div>
