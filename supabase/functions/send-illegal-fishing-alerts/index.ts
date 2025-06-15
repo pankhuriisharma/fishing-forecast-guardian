@@ -72,52 +72,66 @@ const handler = async (req: Request): Promise<Response> => {
     const responseData = await response.json();
     const data = responseData.data || responseData;
 
-    // Use the top entry from high_risk_areas (first one in the array)
-    const topRisk =
+    // Get ALL high-risk areas for the email
+    const allRisks =
       data?.high_risk_areas && Array.isArray(data.high_risk_areas) && data.high_risk_areas.length > 0
-        ? data.high_risk_areas[0]
+        ? data.high_risk_areas
         : null;
 
-    if (!topRisk) {
+    if (!allRisks) {
       return new Response(JSON.stringify({ message: "No high risk areas found. No email sent." }), {
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
 
-    // Compose the email with the top entry details
+    // Build an HTML table with all rows, just as in your UI:
+    let riskRowsHtml = allRisks.map((row: any, idx: number) => {
+      let badgeColor =
+        row.risk_level?.toLowerCase() === "critical"  ? "background:#dc2626;color:white;" : // Red
+        row.risk_level?.toLowerCase() === "high"      ? "background:#f59e42;color:white;" : // Orange
+        row.risk_level?.toLowerCase() === "medium"    ? "background:#eab308;color:white;" : // Yellow
+        "background:#22c55e;color:white;"; // Green
+      
+      return `<tr>
+        <td style="padding:6px 8px;font-family:monospace;font-size:13px;">#${row.id || idx + 1}</td>
+        <td style="padding:6px 8px;">${(row.latitude ?? 0).toFixed(3)}, ${(row.longitude ?? 0).toFixed(3)}</td>
+        <td style="padding:6px 8px;"><span style="border-radius:4px;padding:2px 6px;border:1px solid #999;background:#f4f4f4;">${row.flag_state}</span></td>
+        <td style="padding:6px 8px;">${row.fishing_hours?.toFixed ? row.fishing_hours.toFixed(1) : row.fishing_hours}h</td>
+        <td style="padding:6px 8px;">${row.vessel_count}</td>
+        <td style="padding:6px 8px;">
+          <span style="border-radius:6px;padding:2px 12px;font-weight:bold;${badgeColor}">${row.risk_level}</span>
+        </td>
+        <td style="padding:6px 8px;">${row.last_updated ? new Date(row.last_updated).toLocaleString() : ""}</td>
+      </tr>`;
+    }).join("\n");
+
     const htmlMessage = `
-      <h2>🚨 Real-Time Illegal Fishing Alert</h2>
-      <p>Here is the latest high-risk area detected right now:</p>
-      <table border="1" style="border-collapse:collapse;">
+      <h2 style="margin-bottom:8px;">🚨 Real-Time Illegal Fishing Alert</h2>
+      <p>Here are <b>all the current high-risk areas</b> detected right now:</p>
+      <table border="1" style="border-collapse:collapse;margin-top:12px;">
         <thead>
           <tr>
-            <th>Flag State</th>
+            <th>#</th>
             <th>Coordinates</th>
-            <th>Risk Level</th>
+            <th>Flag</th>
             <th>Fishing Hours</th>
             <th>Vessel Count</th>
+            <th>Risk Level</th>
             <th>Last Updated</th>
           </tr>
         </thead>
         <tbody>
-          <tr>
-            <td style="padding:6px 12px;">${topRisk.flag_state}</td>
-            <td style="padding:6px 12px;">${topRisk.latitude.toFixed(2)}, ${topRisk.longitude.toFixed(2)}</td>
-            <td style="padding:6px 12px;"><b>${topRisk.risk_level}</b></td>
-            <td style="padding:6px 12px;">${topRisk.fishing_hours.toFixed(1)}h</td>
-            <td style="padding:6px 12px;">${topRisk.vessel_count}</td>
-            <td style="padding:6px 12px;">${new Date(topRisk.last_updated).toLocaleString()}</td>
-          </tr>
+          ${riskRowsHtml}
         </tbody>
       </table>
-      <p style="margin-top:1em;">Stay vigilant! For more details, view in the app.</p>
+      <p style="margin-top:1.5em;font-size:13px;color:#666;">Stay vigilant! For more details, view data directly in the FishGuard app.</p>
     `;
 
     // Send the email using Resend
     const emailResp = await resend.emails.send({
       from: "Illegal Fishing Alerts <onboarding@resend.dev>",
       to: [to_email],
-      subject: "🚨 Real-Time High-Risk Illegal Fishing Area",
+      subject: "🚨 Real-Time High-Risk Illegal Fishing Areas",
       html: htmlMessage,
     });
 
@@ -134,9 +148,10 @@ const handler = async (req: Request): Promise<Response> => {
       );
     }
 
-    return new Response(JSON.stringify({ message: `Alert sent to ${to_email} with latest fishing data`, email: emailResp }), {
-      headers: { ...corsHeaders, "Content-Type": "application/json" },
-    });
+    return new Response(
+      JSON.stringify({ message: `Alert sent to ${to_email} with latest fishing risk data`, email: emailResp }),
+      { headers: { ...corsHeaders, "Content-Type": "application/json" } }
+    );
 
   } catch (error: any) {
     const errorMessage =
@@ -156,3 +171,4 @@ const handler = async (req: Request): Promise<Response> => {
 };
 
 serve(handler);
+
