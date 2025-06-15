@@ -1,12 +1,14 @@
 
-// Replaces Resend with MailerSend for sending emails.
 // Accepts POST requests with: { to_email: string }
 // Sends all visible "High-Risk Fishing Areas" in the email.
+//
+// Uses Resend for transactional emails.
 
 import "https://deno.land/x/xhr@0.1.0/mod.ts";
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
+import { Resend } from "npm:resend@2.0.0";
 
-const MAILERSEND_API_KEY = Deno.env.get("MAILERSEND_API_KEY");
+const RESEND_API_KEY = Deno.env.get("RESEND_API_KEY");
 
 const FETCH_FUNCTION_URL = `${Deno.env.get("SUPABASE_URL")}/functions/v1/fetch-fishing-data`;
 
@@ -38,8 +40,8 @@ const handler = async (req: Request): Promise<Response> => {
     });
   }
 
-  if (!MAILERSEND_API_KEY) {
-    return new Response(JSON.stringify({ error: "MailerSend API key is not set." }), {
+  if (!RESEND_API_KEY) {
+    return new Response(JSON.stringify({ error: "Resend API key is not set." }), {
       status: 500,
       headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
@@ -86,7 +88,7 @@ const handler = async (req: Request): Promise<Response> => {
       });
     }
 
-    // Build an HTML table with all rows, just as in your UI:
+    // Build an HTML table with all rows
     let riskRowsHtml = allRisks.map((row: any, idx: number) => {
       let badgeColor =
         row.risk_level?.toLowerCase() === "critical"  ? "background:#dc2626;color:white;" : // Red
@@ -128,31 +130,21 @@ const handler = async (req: Request): Promise<Response> => {
       <p style="margin-top:1.5em;font-size:13px;color:#666;">Stay vigilant! For more details, view data directly in the FishGuard app.</p>
     `;
 
-    // Send the email using MailerSend transactional email API
-    const mailerSendResp = await fetch("https://api.mailersend.com/v1/email", {
-      method: "POST",
-      headers: {
-        "Authorization": `Bearer ${MAILERSEND_API_KEY}`,
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        from: {
-          email: "illegal-fishing-alert@mailersend.com",
-          name: "Illegal Fishing Alerts"
-        },
-        to: [{ email: to_email }],
-        subject: "🚨 Real-Time High-Risk Illegal Fishing Areas",
-        html: htmlMessage,
-      }),
+    // Send the email using Resend
+    const resend = new Resend(RESEND_API_KEY);
+
+    const emailResp = await resend.emails.send({
+      from: "Illegal Fishing Alerts <onboarding@resend.dev>",
+      to: [to_email],
+      subject: "🚨 Real-Time High-Risk Illegal Fishing Areas",
+      html: htmlMessage,
     });
 
-    const mailerSendData = await mailerSendResp.json();
-
-    if (!mailerSendResp.ok) {
+    if (emailResp?.error) {
       return new Response(
         JSON.stringify({
-          error: "Email sending failed (MailerSend).",
-          details: mailerSendData?.message || mailerSendData,
+          error: "Email sending failed.",
+          details: emailResp.error
         }),
         {
           status: 500,
@@ -162,7 +154,7 @@ const handler = async (req: Request): Promise<Response> => {
     }
 
     return new Response(
-      JSON.stringify({ message: `Alert sent to ${to_email} with latest fishing risk data`, email: mailerSendData }),
+      JSON.stringify({ message: `Alert sent to ${to_email} with latest fishing risk data`, email: emailResp }),
       { headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );
 
