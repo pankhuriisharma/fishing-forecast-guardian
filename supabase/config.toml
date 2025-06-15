@@ -1,4 +1,3 @@
-
 project_id = "igxauoyjttwtyujsoxjt"
 
 [api]
@@ -53,4 +52,7 @@ double_confirm_changes = true
 enable_confirmations = false
 
 [functions.fetch-fishing-data]
+verify_jwt = false
+
+[functions.send-illegal-fishing-alerts]
 verify_jwt = false
