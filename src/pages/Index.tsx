@@ -14,7 +14,7 @@ import ModelResults from "@/components/ModelResults";
 import ResultCharts from "@/components/ResultCharts";
 import GithubIcon from "@/components/GithubIcon";
 import { toast } from "sonner";
-import { Database, Brain, ChevronDown, Ship, UploadCloud, Beaker, Map, TrendingUp } from "lucide-react";
+import { Database, Brain, ChevronDown, Ship, UploadCloud, Beaker, Map } from "lucide-react";
 import HighRiskRegions from "@/components/HighRiskRegions";
 import { createClient } from '@supabase/supabase-js';
 import GetEmailUpdateDialog from "@/components/GetEmailUpdateDialog";
@@ -225,17 +225,6 @@ const Index = () => {
               </TabsList>
             </div>
             
-            <div className="flex justify-end mb-6 max-w-6xl mx-auto pr-1">
-              <a
-                href="/high-risk-regions"
-                className="bg-red-100 text-red-700 rounded-md px-4 py-2 font-medium shadow-xs hover:bg-red-200 transition text-sm flex items-center gap-2"
-                style={{ textDecoration: "none" }}
-              >
-                <TrendingUp className="h-4 w-4" />
-                High Risk Regions
-              </a>
-            </div>
-            
             <TabsContent value="data" className="p-0 mt-0">
               <div className="grid md:grid-cols-2 gap-6">
                 <div className="space-y-6">
@@ -359,6 +348,7 @@ const Index = () => {
                 
                 <div className="space-y-6">
                   <ModelResults trainedModel={trainedModel} prediction={prediction} />
+                  {trainedModel && <HighRiskRegions />}
                 </div>
               </div>
             </TabsContent>
@@ -391,6 +381,7 @@ const Index = () => {
                     prediction={prediction}
                     onLocationSelect={handleLocationSelect}
                   />
+                  <HighRiskRegions />
                 </div>
                 <div className="space-y-6">
                   <ResultCharts data={fishingData} />
