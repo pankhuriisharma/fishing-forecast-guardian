@@ -1,9 +1,13 @@
+
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
-import { HelpCircle, Github, LifeBuoy, Ship, Waves } from "lucide-react";
+import { HelpCircle, Github, LifeBuoy, Ship, Waves, Database } from "lucide-react";
 import { toast } from "sonner";
+import { useNavigate } from "react-router-dom";
 
 const Header = () => {
+  const navigate = useNavigate();
+
   return (
     <header className="w-full backdrop-blur-md bg-white/90 sticky top-0 z-50 shadow-sm border-b border-slate-200">
       <div className="container mx-auto px-4 py-3 flex items-center justify-between">
@@ -25,10 +29,19 @@ const Header = () => {
             variant="outline"
             size="sm"
             className="text-blue-700 border-blue-200 hover:bg-blue-50 font-semibold hidden md:flex"
-            onClick={() => window.location.assign('/real-time-fishing')}
+            onClick={() => navigate("/real-time-fishing")}
           >
             <Waves className="h-4 w-4 mr-1" />
             Real-Time Fishing
+          </Button>
+          <Button
+            variant="outline"
+            size="sm"
+            className="text-purple-700 border-purple-200 hover:bg-purple-50 font-semibold hidden md:flex"
+            onClick={() => navigate("/historical-high-risk")}
+          >
+            <Database className="h-4 w-4 mr-1" />
+            Historical High Risk Regions
           </Button>
           
           <div className="flex items-center gap-2">
