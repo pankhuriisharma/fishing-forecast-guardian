@@ -1,7 +1,6 @@
-
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
-import { HelpCircle, Github, LifeBuoy, Ship } from "lucide-react";
+import { HelpCircle, Github, LifeBuoy, Ship, Waves } from "lucide-react";
 import { toast } from "sonner";
 
 const Header = () => {
@@ -22,6 +21,16 @@ const Header = () => {
         </div>
         
         <div className="flex items-center gap-4">
+          <Button
+            variant="outline"
+            size="sm"
+            className="text-blue-700 border-blue-200 hover:bg-blue-50 font-semibold hidden md:flex"
+            onClick={() => window.location.assign('/real-time-fishing')}
+          >
+            <Waves className="h-4 w-4 mr-1" />
+            Real-Time Fishing
+          </Button>
+          
           <div className="flex items-center gap-2">
             <Button
               variant="ghost"
