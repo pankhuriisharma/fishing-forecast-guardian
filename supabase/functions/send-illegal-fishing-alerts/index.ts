@@ -16,19 +16,6 @@ const corsHeaders = {
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
 };
 
-function getRiskColor(riskLevel: string) {
-  switch (riskLevel) {
-    case "Critical":
-      return "red";
-    case "High":
-      return "orange";
-    case "Medium":
-      return "goldenrod";
-    default:
-      return "green";
-  }
-}
-
 const handler = async (req: Request): Promise<Response> => {
   // Handle CORS preflight
   if (req.method === "OPTIONS") {
@@ -57,7 +44,7 @@ const handler = async (req: Request): Promise<Response> => {
   }
 
   try {
-    // Fetch illegal fishing data from the edge function
+    // Fetch latest data from fetch-fishing-data edge function
     const response = await fetch(FETCH_FUNCTION_URL, {
       method: "GET",
       headers: {
@@ -66,17 +53,13 @@ const handler = async (req: Request): Promise<Response> => {
       },
     });
 
-    console.log("Fetch response status:", response.status);
-
     if (!response.ok) {
       const errorText = await response.text();
-      console.error("Fetch fishing data failed:", errorText);
-      // Attempt to parse JSON if possible for even more details
       let errorJSON = null;
       try { errorJSON = JSON.parse(errorText); } catch {}
       return new Response(
         JSON.stringify({
-          error: `Failed to fetch fishing data: ${response.status}`,
+          error: `Failed to fetch real-time fishing data: ${response.status}`,
           details: errorJSON || errorText
         }),
         {
@@ -87,36 +70,27 @@ const handler = async (req: Request): Promise<Response> => {
     }
 
     const responseData = await response.json();
-    console.log("Fetch response data:", responseData);
-
     const data = responseData.data || responseData;
 
-    if (!data?.high_risk_areas || !Array.isArray(data.high_risk_areas) || data.high_risk_areas.length === 0) {
-      // No high risk areas found, do not send email
-      console.log("No high risk areas to alert.");
-      return new Response(JSON.stringify({ message: "No high risk areas detected. No alert sent." }), {
+    // Use the top entry from high_risk_areas (first one in the array)
+    const topRisk =
+      data?.high_risk_areas && Array.isArray(data.high_risk_areas) && data.high_risk_areas.length > 0
+        ? data.high_risk_areas[0]
+        : null;
+
+    if (!topRisk) {
+      return new Response(JSON.stringify({ message: "No high risk areas found. No email sent." }), {
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
 
-    // Compose a summary of findings
-    const regionListHTML = data.high_risk_areas.map((region: any) => `
-      <tr>
-        <td style="padding:6px 12px;">${region.flag_state}</td>
-        <td style="padding:6px 12px;">${region.latitude.toFixed(2)}, ${region.longitude.toFixed(2)}</td>
-        <td style="padding:6px 12px;"><b>${region.risk_level}</b></td>
-        <td style="padding:6px 12px;">${region.fishing_hours.toFixed(1)}h</td>
-        <td style="padding:6px 12px;">${region.vessel_count}</td>
-        <td style="padding:6px 12px;">${new Date(region.last_updated).toLocaleString()}</td>
-      </tr>
-    `).join("");
-
+    // Compose the email with the top entry details
     const htmlMessage = `
-      <h2>🚨 Illegal Fishing Alert: High-Risk Areas Detected</h2>
-      <p>Detected <b>${data.high_risk_areas.length}</b> high-risk region(s) for illegal fishing activity:</p>
+      <h2>🚨 Real-Time Illegal Fishing Alert</h2>
+      <p>Here is the latest high-risk area detected right now:</p>
       <table border="1" style="border-collapse:collapse;">
         <thead>
-          <tr style="background:#f8d7da;">
+          <tr>
             <th>Flag State</th>
             <th>Coordinates</th>
             <th>Risk Level</th>
@@ -126,23 +100,27 @@ const handler = async (req: Request): Promise<Response> => {
           </tr>
         </thead>
         <tbody>
-          ${regionListHTML}
+          <tr>
+            <td style="padding:6px 12px;">${topRisk.flag_state}</td>
+            <td style="padding:6px 12px;">${topRisk.latitude.toFixed(2)}, ${topRisk.longitude.toFixed(2)}</td>
+            <td style="padding:6px 12px;"><b>${topRisk.risk_level}</b></td>
+            <td style="padding:6px 12px;">${topRisk.fishing_hours.toFixed(1)}h</td>
+            <td style="padding:6px 12px;">${topRisk.vessel_count}</td>
+            <td style="padding:6px 12px;">${new Date(topRisk.last_updated).toLocaleString()}</td>
+          </tr>
         </tbody>
       </table>
-      <p style="margin-top:1em;">This is an automated alert sent on request.</p>
+      <p style="margin-top:1em;">Stay vigilant! For more details, view in the app.</p>
     `;
 
     // Send the email using Resend
     const emailResp = await resend.emails.send({
       from: "Illegal Fishing Alerts <onboarding@resend.dev>",
       to: [to_email],
-      subject: "🚨 High-Risk Illegal Fishing Areas Detected",
+      subject: "🚨 Real-Time High-Risk Illegal Fishing Area",
       html: htmlMessage,
     });
 
-    console.log("Alert email sent:", emailResp);
-
-    // Resend may itself return an error even on 200 HTTP status
     if (emailResp?.error) {
       return new Response(
         JSON.stringify({
@@ -156,17 +134,14 @@ const handler = async (req: Request): Promise<Response> => {
       );
     }
 
-    return new Response(JSON.stringify({ message: `Alert sent to ${to_email}`, email: emailResp }), {
+    return new Response(JSON.stringify({ message: `Alert sent to ${to_email} with latest fishing data`, email: emailResp }), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
 
   } catch (error: any) {
-    // Improved error reporting for frontend user and backend log clarity
     const errorMessage =
       error?.message ||
       (typeof error === "string" ? error : "An unknown error occurred in the edge function.");
-    console.error("Error in send-illegal-fishing-alerts (frontend user will see this):", errorMessage, error);
-    // Provide as much diagnostic info as possible
     return new Response(
       JSON.stringify({
         error: errorMessage || "Unhandled edge function error (no message present)",
@@ -181,4 +156,3 @@ const handler = async (req: Request): Promise<Response> => {
 };
 
 serve(handler);
-
