@@ -191,15 +191,6 @@ const Index = () => {
               <svg width="20" height="20" fill="none" stroke="currentColor" strokeWidth="2" className="inline-block mr-1" viewBox="0 0 24 24"><path d="M19 4H5a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6a2 2 0 0 0-2-2z" /><path d="M16 2v4" /><path d="M8 2v4" /><path d="M3 10h18" /></svg>
               Articles & Insights
             </Button>
-            <Button
-              variant="outline"
-              size="lg"
-              className="w-full sm:w-auto gap-2"
-              onClick={() => { window.location.href = "/smart-patrol"; }}
-            >
-              <svg width="22" height="22" fill="none" stroke="currentColor" strokeWidth="2" className="inline-block mr-1" viewBox="0 0 24 24"><path d="M3 12l2-2m0 0L3 8m2 2V4a1 1 0 0 1 1-1h14a1 1 0 0 1 1 1v16a1 1 0 0 1-1 1H6a1 1 0 0 1-1-1v-6m0 0l-2-2" /></svg>
-              Smart Patrol AI
-            </Button>
           </div>
         </div>
         

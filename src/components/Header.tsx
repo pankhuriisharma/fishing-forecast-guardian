@@ -1,84 +1,89 @@
-import React from "react";
 import { Button } from "@/components/ui/button";
-import {
-  Sheet,
-  SheetContent,
-  SheetDescription,
-  SheetHeader,
-  SheetTitle,
-  SheetTrigger,
-} from "@/components/ui/sheet";
-import { Menu } from "lucide-react";
+import { Separator } from "@/components/ui/separator";
+import { HelpCircle, Github, LifeBuoy, Ship, Waves, Database, Newspaper } from "lucide-react";
+import { toast } from "sonner";
 import { useNavigate } from "react-router-dom";
 
 const Header = () => {
   const navigate = useNavigate();
 
   return (
-    <header className="bg-white/95 backdrop-blur-sm sticky top-0 z-50 border-b">
-      <div className="container py-4 px-4 flex items-center justify-between">
-        <div className="flex items-center">
-          <Button variant="link" className="mr-4 text-2xl font-bold p-0 h-auto" onClick={() => navigate("/")}>
-            FishGuard AI
-          </Button>
+    <header className="w-full backdrop-blur-md bg-white/90 sticky top-0 z-50 shadow-sm border-b border-slate-200">
+      <div className="container mx-auto px-4 py-3 flex items-center justify-between">
+        <div className="flex items-center gap-2">
+          <div className="relative">
+            <div className="absolute -inset-1 rounded-full bg-gradient-to-r from-ocean-dark to-ocean-light opacity-75 blur-sm"></div>
+            <div className="relative rounded-full p-1.5 bg-ocean text-white">
+              <Ship className="h-5 w-5" />
+            </div>
+          </div>
+          <div>
+            <h1 className="text-xl font-bold text-slate-800 tracking-tight">FishGuard</h1>
+            <p className="text-xs text-slate-500">Illegal Fishing Detection System</p>
+          </div>
         </div>
         
-        <nav className="flex items-center gap-2">
+        <div className="flex items-center gap-4">
           <Button
-            variant="ghost"
-            onClick={() => navigate("/articles")}
-            className="gap-2"
+            variant="outline"
+            size="sm"
+            className="text-ocean-700 border-ocean-200 hover:bg-ocean-50 font-semibold hidden md:flex"
+            onClick={() => navigate("/real-time-fishing")}
           >
-            Articles & Insights
+            <Waves className="h-4 w-4 mr-1" />
+            Real-Time Fishing
           </Button>
           <Button
-            variant="ghost"
-            onClick={() => navigate("/smart-patrol")}
-            className="gap-2"
+            variant="outline"
+            size="sm"
+            className="text-purple-700 border-purple-200 hover:bg-purple-50 font-semibold hidden md:flex"
+            onClick={() => navigate("/historical-high-risk")}
           >
-            Smart Patrol AI
+            <Database className="h-4 w-4 mr-1" />
+            Historical High Risk Regions
           </Button>
-        </nav>
-
-        <Sheet>
-          <SheetTrigger asChild>
-            <Button variant="outline" size="icon">
-              <Menu className="h-4 w-4" />
+          
+          <div className="flex items-center gap-2">
+            <Button
+              variant="ghost"
+              size="sm"
+              className="text-slate-600 hover:text-primary hidden md:flex"
+              onClick={() => {
+                toast.info("Help documentation would open here");
+              }}
+            >
+              <HelpCircle className="h-4 w-4 mr-1" />
+              Help
             </Button>
-          </SheetTrigger>
-          <SheetContent side="right" className="sm:max-w-sm">
-            <SheetHeader>
-              <SheetTitle>Menu</SheetTitle>
-              <SheetDescription>
-                Explore FishGuard AI
-              </SheetDescription>
-            </SheetHeader>
-            <div className="grid gap-4 py-4">
-              <Button variant="ghost" className="justify-start" onClick={() => navigate("/")}>
-                Home
-              </Button>
-              <Button variant="ghost" className="justify-start" onClick={() => navigate("/real-time-fishing")}>
-                Real-Time Fishing
-              </Button>
-              <Button variant="ghost" className="justify-start" onClick={() => navigate("/high-risk-regions")}>
-                High-Risk Regions
-              </Button>
-              <Button variant="ghost" className="justify-start" onClick={() => navigate("/historical-high-risk")}>
-                Historical High-Risk
-              </Button>
-              <Button variant="ghost" className="justify-start" onClick={() => navigate("/articles")}>
-                Articles & Insights
-              </Button>
+            
+            <Separator orientation="vertical" className="h-6 hidden md:block" />
+            
+            <div className="flex items-center gap-2">
               <Button
-                variant="ghost"
-                className="justify-start"
-                onClick={() => navigate("/smart-patrol")}
+                variant="outline"
+                size="sm"
+                className="hidden md:flex"
+                onClick={() => {
+                  toast.info("Support would open here");
+                }}
               >
-                Smart Patrol AI
+                <LifeBuoy className="h-4 w-4 mr-1" />
+                Support
+              </Button>
+              
+              <Button
+                variant="default"
+                size="sm"
+                onClick={() => {
+                  window.open("https://github.com/", "_blank");
+                }}
+              >
+                <Github className="h-4 w-4 mr-1" />
+                <span className="hidden md:inline">GitHub</span>
               </Button>
             </div>
-          </SheetContent>
-        </Sheet>
+          </div>
+        </div>
       </div>
     </header>
   );
