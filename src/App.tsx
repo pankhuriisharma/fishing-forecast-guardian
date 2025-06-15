@@ -9,6 +9,7 @@ import NotFound from "./pages/NotFound";
 import RealTimeFishingPage from "./pages/RealTimeFishingPage";
 import HistoricalHighRiskRegionsPage from "./pages/HistoricalHighRiskRegionsPage";
 import ArticlesPage from "./pages/ArticlesPage";
+import SmartPatrolPage from "./pages/SmartPatrolPage";
 import { ThemeProvider } from "./components/ThemeProvider";
 
 const queryClient = new QueryClient();
@@ -26,7 +27,7 @@ const App = () => (
             <Route path="/high-risk-regions" element={<HighRiskRegionsPage />} />
             <Route path="/historical-high-risk" element={<HistoricalHighRiskRegionsPage />} />
             <Route path="/articles" element={<ArticlesPage />} />
-            {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
+            <Route path="/smart-patrol" element={<SmartPatrolPage />} />
             <Route path="*" element={<NotFound />} />
           </Routes>
         </BrowserRouter>
