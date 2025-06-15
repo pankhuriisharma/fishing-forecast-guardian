@@ -1,6 +1,6 @@
 
 import { useEffect } from "react";
-import L from "leaflet";
+import L, { LatLngTuple } from "leaflet";
 
 interface SpeciesRiskLayerProps {
   map: L.Map | null;
@@ -56,13 +56,18 @@ const SpeciesRiskLayer = ({ map, show }: SpeciesRiskLayerProps) => {
     if (show) {
       layerGroup = L.layerGroup(
         dummyHabitats.map(habitat =>
-          L.polygon(habitat.polygon, {
-            color: habitat.color,
-            fillOpacity: 0.2,
-            weight: 2,
-            dashArray: "6 6"
-          })
-          .bindTooltip(`<b>${habitat.name}</b>`, { sticky: true })
+          L.polygon(
+            habitat.polygon.map(
+              p => [p[0], p[1]] as LatLngTuple
+            ),
+            {
+              color: habitat.color,
+              fillOpacity: 0.2,
+              weight: 2,
+              dashArray: "6 6"
+            }
+          )
+            .bindTooltip(`<b>${habitat.name}</b>`, { sticky: true })
         )
       ).addTo(map);
     }
@@ -77,3 +82,4 @@ const SpeciesRiskLayer = ({ map, show }: SpeciesRiskLayerProps) => {
 };
 
 export default SpeciesRiskLayer;
+
