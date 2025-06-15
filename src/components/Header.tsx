@@ -1,7 +1,6 @@
-
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
-import { HelpCircle, Github, LifeBuoy, Ship, Waves, Database } from "lucide-react";
+import { HelpCircle, Github, LifeBuoy, Ship, Waves, Database, Newspaper } from "lucide-react";
 import { toast } from "sonner";
 import { useNavigate } from "react-router-dom";
 
@@ -28,7 +27,7 @@ const Header = () => {
           <Button
             variant="outline"
             size="sm"
-            className="text-blue-700 border-blue-200 hover:bg-blue-50 font-semibold hidden md:flex"
+            className="text-ocean-700 border-ocean-200 hover:bg-ocean-50 font-semibold hidden md:flex"
             onClick={() => navigate("/real-time-fishing")}
           >
             <Waves className="h-4 w-4 mr-1" />

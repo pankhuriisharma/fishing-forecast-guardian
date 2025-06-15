@@ -8,6 +8,7 @@ import HighRiskRegionsPage from "./pages/HighRiskRegionsPage";
 import NotFound from "./pages/NotFound";
 import RealTimeFishingPage from "./pages/RealTimeFishingPage";
 import HistoricalHighRiskRegionsPage from "./pages/HistoricalHighRiskRegionsPage";
+import ArticlesPage from "./pages/ArticlesPage";
 import { ThemeProvider } from "./components/ThemeProvider";
 
 const queryClient = new QueryClient();
@@ -24,6 +25,7 @@ const App = () => (
             <Route path="/real-time-fishing" element={<RealTimeFishingPage />} />
             <Route path="/high-risk-regions" element={<HighRiskRegionsPage />} />
             <Route path="/historical-high-risk" element={<HistoricalHighRiskRegionsPage />} />
+            <Route path="/articles" element={<ArticlesPage />} />
             {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
             <Route path="*" element={<NotFound />} />
           </Routes>
