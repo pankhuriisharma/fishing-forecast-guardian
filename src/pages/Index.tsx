@@ -19,6 +19,7 @@ import HighRiskRegions from "@/components/HighRiskRegions";
 import { createClient } from '@supabase/supabase-js';
 import GetEmailUpdateDialog from "@/components/GetEmailUpdateDialog";
 import ModelExplainabilityDashboard from "@/components/ModelExplainabilityDashboard";
+import PatrolGame from "@/components/PatrolGame";
 
 const supabaseUrl = "https://igxauoyjttwtyujsoxjt.supabase.co";
 const supabaseAnonKey = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImlneGF1b3lqdHR3dHl1anNveGp0Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDkzMDQ4ODUsImV4cCI6MjA2NDg4MDg4NX0.2yHE-O-HJtS8DLcfF52IFT9YHhSejGRtmjfi4V7Uw9g";
@@ -398,6 +399,9 @@ const Index = () => {
             </TabsContent>
           </Tabs>
         </div>
+        
+        {/* Place the PatrolGame minigame below the hero/main section */}
+        <PatrolGame />
       </main>
       
       <Footer />
