@@ -12,6 +12,8 @@ import { toast } from "sonner";
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
 import 'leaflet.heat';
+// Add imports for XAI and overlay
+import SpeciesRiskLayer from "./SpeciesRiskLayer";
 
 interface MapViewProps {
   data: FishingData[];
@@ -85,6 +87,9 @@ const MapView = ({ data, prediction, onLocationSelect }: MapViewProps) => {
   const [mapLoaded, setMapLoaded] = useState<boolean>(false);
   const [isLoading, setIsLoading] = useState<boolean>(true);
   const [mapView, setMapView] = useState<'heatmap' | 'markers'>('heatmap');
+  // New: Expose map instance
+  const [leafletMapInstance, setLeafletMapInstance] = useState<L.Map | null>(null);
+  const [showSpeciesRisk, setShowSpeciesRisk] = useState<boolean>(false);
   
   useEffect(() => {
     if (!mapContainerRef.current || leafletMapRef.current) return;
@@ -132,6 +137,7 @@ const MapView = ({ data, prediction, onLocationSelect }: MapViewProps) => {
       
       // Store map in ref
       leafletMapRef.current = map;
+      setLeafletMapInstance(map);
       
       // Create markers layer
       markersLayerRef.current = L.layerGroup().addTo(map);
@@ -351,6 +357,7 @@ const MapView = ({ data, prediction, onLocationSelect }: MapViewProps) => {
   
   return (
     <Card className="relative overflow-hidden bg-white/80 backdrop-blur-sm border border-slate-200 shadow-md h-[400px] md:h-[600px] animate-fade-in">
+      {/* Top left: Badges and species layer toggle */}
       <div className="absolute top-2 left-2 z-10 flex flex-col md:flex-row gap-2">
         <Badge variant="outline" className="bg-background/80 backdrop-blur-sm">
           <Map className="w-3 h-3 mr-1" />
@@ -371,7 +378,17 @@ const MapView = ({ data, prediction, onLocationSelect }: MapViewProps) => {
           <AlertTriangle className="w-3 h-3 mr-1 text-green-500" />
           Low Risk
         </Badge>
+        <button
+          onClick={() => setShowSpeciesRisk(v => !v)}
+          className={`rounded-md px-2 py-1 border text-xs shadow-sm font-medium transition-colors ${
+            showSpeciesRisk ? "bg-yellow-100 border-yellow-400 text-yellow-900" : "bg-slate-200/70 border-slate-400 hover:bg-yellow-200"
+          }`}
+          title="Show endangered species/migration risk areas on map"
+        >
+          {showSpeciesRisk ? "Hide" : "Show"} Species Risk
+        </button>
       </div>
+      {/* ... keep existing map controls ... */}
       
       <div className="absolute top-2 right-2 z-10">
         <TooltipProvider>
@@ -496,6 +513,8 @@ const MapView = ({ data, prediction, onLocationSelect }: MapViewProps) => {
       )}
       
       <div ref={mapContainerRef} className="w-full h-full" />
+      {/* Species risk overlay */}
+      <SpeciesRiskLayer map={leafletMapInstance} show={showSpeciesRisk} />
     </Card>
   );
 };
